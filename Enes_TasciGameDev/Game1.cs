@@ -1,7 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Enes_TasciGameDev.States;
 
 namespace Enes_TasciGameDev
 {
@@ -9,8 +8,8 @@ namespace Enes_TasciGameDev
     {
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
-        private GameState currentState = GameState.StartMenu;
         private SpriteFont font;
+        private IGameState currentState;
 
 
         public Game1()
@@ -22,73 +21,42 @@ namespace Enes_TasciGameDev
 
         protected override void Initialize()
         {
-            // TODO: Add your initialization logic here
-
+            Services.AddService(typeof(Game1), this);
             base.Initialize();
         }
 
+        public void ChangeState(IGameState newState)
+        {
+            currentState = newState;
+            currentState.LoadContent();
+        }
+
+
         protected override void LoadContent()
         {
-            font = Content.Load<SpriteFont>("DefaultFont");
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-
-            // TODO: use this.Content to load your game content here
+            currentState = new StartScreen(this); // <-- pass Game1 instance
+            currentState.LoadContent();
         }
+
+
 
         protected override void Update(GameTime gameTime)
         {
-            var keyboard = Keyboard.GetState();
-
-            if (currentState == GameState.StartMenu)
-            {
-                if (keyboard.IsKeyDown(Keys.Enter))
-                {
-                    currentState = GameState.Playing;
-                }
-            }
-            else if (currentState == GameState.GameOver)
-            {
-                if (keyboard.IsKeyDown(Keys.Enter))
-                {
-                    currentState = GameState.StartMenu;
-                }
-            }
-            else if (currentState == GameState.Playing)
-            {
-                // hier later game-logica
-            }
-
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ||
+                Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
-            // TODO: Add your update logic here
+            currentState?.Update(gameTime);
 
             base.Update(gameTime);
         }
 
+
         protected override void Draw(GameTime gameTime)
         {
-            _spriteBatch.Begin();
-
-            if (currentState == GameState.StartMenu)
-            {
-                _spriteBatch.DrawString(font, "Press ENTER to Start", new Vector2(100, 100), Color.White);
-            }
-            else if (currentState == GameState.Playing)
-            {
-                _spriteBatch.DrawString(font, "Game Running...", new Vector2(100, 100), Color.White);
-            }
-            else if (currentState == GameState.GameOver)
-            {
-                _spriteBatch.DrawString(font, "Game Over! Press ENTER", new Vector2(100, 100), Color.Red);
-            }
-
-            _spriteBatch.End();
-
             GraphicsDevice.Clear(Color.CornflowerBlue);
-
-            // TODO: Add your drawing code here
-
+            currentState.Draw(_spriteBatch);
             base.Draw(gameTime);
         }
     }
