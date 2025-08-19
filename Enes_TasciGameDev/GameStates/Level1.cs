@@ -23,6 +23,10 @@ public class Level1 : IGameState
     private Coin currentCoin;
     private Texture2D finishTexture;
     private Finish finish;
+    private bool levelPassed = false;
+    private Texture2D overlay;
+
+
 
 
     public Level1(Game1 game)
@@ -52,7 +56,11 @@ public class Level1 : IGameState
         coinTexture = game.Content.Load<Texture2D>("coin"); // voeg coin.png toe aan Content
         coins = new List<Coin>();
 
-        for (int i = 0; i < 10; i++) // spawn 10 coins random
+        //overlay
+        overlay = new Texture2D(game.GraphicsDevice, 1, 1);
+        overlay.SetData(new[] { Color.Black });
+
+        for (int i = 0; i < 5; i++) // spawn 10 coins random
         {
             Vector2 pos = new Vector2(
                 random.Next(0, game.GraphicsDevice.Viewport.Width - coinTexture.Width),
@@ -64,7 +72,7 @@ public class Level1 : IGameState
     }
     private void SpawnNextCoin()
     {
-        if (score < 10)
+        if (score < 5)
         {
             float scale = 0.1f; //zelfde als in Coin
             int coinWidth = (int)(coinTexture.Width * scale);
@@ -92,7 +100,7 @@ public class Level1 : IGameState
 
     private void CheckForFinishSpawn()
     {
-        if (score >= 10 && finish == null)
+        if (score >= 5 && finish == null)
         {
             // Spawn huisje rechts-midden, iets kleiner
             float scale = 0.5f; // halve grootte van de originele texture
@@ -124,8 +132,7 @@ public class Level1 : IGameState
 
         if (finish != null && playerBounds.Intersects(finish.GetBounds()))
         {
-            // Level voltooid
-            //game.ChangeState(new LevelCompleteState(game)); // Of een andere logica
+            levelPassed = true; // level is gepassed
         }
     }
 
@@ -176,6 +183,24 @@ public class Level1 : IGameState
         if (finish != null)
         {
             finish.Draw(spriteBatch);
+        }
+
+        // Level passed melding
+        if (levelPassed)
+        {
+            // Teken semi-transparante overlay
+            spriteBatch.Draw(overlay, new Rectangle(0, 0,
+                game.GraphicsDevice.Viewport.Width,
+                game.GraphicsDevice.Viewport.Height), Color.Black * 0.6f);
+
+            string message = "Level Complete!";
+            Vector2 size = scoreFont.MeasureString(message);
+            Vector2 position = new Vector2(
+                (game.GraphicsDevice.Viewport.Width - size.X) / 2,
+                (game.GraphicsDevice.Viewport.Height - size.Y) / 2
+            );
+
+            spriteBatch.DrawString(scoreFont, message, position, Color.Yellow);
         }
 
 
