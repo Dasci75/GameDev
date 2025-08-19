@@ -26,10 +26,14 @@ public class Player
         frameHeight = texture.Height / rows;
         row = 0;
     }
-    public void TakeDamage(int amount)
+    public void TakeDamage()
     {
-        Health -= amount;
-        if (Health < 0) Health = 0;
+        if (Health > 0)
+            Health--;
+    }
+    public bool IsDead()
+    {
+        return Health <= 0;
     }
 
 

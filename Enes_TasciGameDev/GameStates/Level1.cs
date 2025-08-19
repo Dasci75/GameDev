@@ -139,6 +139,12 @@ public class Level1 : IGameState
 
     public void Update(GameTime gameTime)
     {
+        if (gameOver)
+        {
+            // Als het spel voorbij is, stop alle bewegingen
+            return; // exit de update meteen
+        }
+
         player.Update(gameTime, game.GraphicsDevice);
 
         Rectangle playerBounds = player.GetBounds();
@@ -146,36 +152,39 @@ public class Level1 : IGameState
         if (currentCoin != null && playerBounds.Intersects(currentCoin.GetBounds()))
         {
             score++;
-            SpawnNextCoin(); // Spawn de volgende coin zodra de huidige gepakt is
+            SpawnNextCoin();
         }
-
-        damageTimer += gameTime.ElapsedGameTime.TotalSeconds;
 
         foreach (var goblin in goblins)
         {
             goblin.Update(gameTime, player.Position, goblins);
 
-            if (goblin.GetBounds().Intersects(player.GetBounds()) && damageTimer >= damageCooldown)
+            if (goblin.GetBounds().Intersects(player.GetBounds()))
             {
-                player.TakeDamage(1);
-                damageTimer = 0;
+                // Player krijgt schade
+                damageTimer += gameTime.ElapsedGameTime.TotalSeconds;
+                if (damageTimer >= damageCooldown)
+                {
+                    player.TakeDamage();
+                    damageTimer = 0;
 
-                goblin.Stun(); // goblin stopt 2 seconden
-                Console.WriteLine($"Player hit! Health: {player.Health}");
+                    // Stun de goblin 2 sec
+                    goblin.Stun(); // Je moet stun functie toevoegen in Goblin
+
+                    if (player.IsDead())
+                    {
+                        gameOver = true;
+                        Console.WriteLine("Game Over!");
+                    }
+                }
             }
-        }
-
-        if (player.Health <= 0)
-        {
-            gameOver = true;
-            Console.WriteLine("Game Over!");
         }
 
         CheckForFinishSpawn();
 
         if (finish != null && playerBounds.Intersects(finish.GetBounds()))
         {
-            levelPassed = true; // level is gepassed
+            levelPassed = true;
         }
     }
 
