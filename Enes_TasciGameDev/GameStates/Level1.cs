@@ -1,4 +1,6 @@
 ﻿using Enes_TasciGameDev;
+using Enes_TasciGameDev.Prop;
+using Microsoft.VisualBasic.Devices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -19,6 +21,9 @@ public class Level1 : IGameState
     private Texture2D scoreBackground;
     private SpriteFont scoreFont;
     private Coin currentCoin;
+    private Texture2D finishTexture;
+    private Finish finish;
+
 
     public Level1(Game1 game)
     {
@@ -27,6 +32,10 @@ public class Level1 : IGameState
 
     public void LoadContent()
     {
+        //finish line
+        finishTexture = game.Content.Load<Texture2D>("finish"); // Voeg house.png toe aan Content
+        finish = null; // nog niet zichtbaar
+
         // Background
         background = game.Content.Load<Texture2D>("bgLevel1");
         scoreFont = game.Content.Load<SpriteFont>("scoreFont"); // grote font, bv 48px
@@ -57,15 +66,37 @@ public class Level1 : IGameState
     {
         if (score < 10)
         {
+            int maxX = Math.Max(0, game.GraphicsDevice.Viewport.Width - coinTexture.Width);
+            int maxY = Math.Max(0, game.GraphicsDevice.Viewport.Height - coinTexture.Height);
+
             Vector2 pos = new Vector2(
-                random.Next(0, game.GraphicsDevice.Viewport.Width - coinTexture.Width),
-                random.Next(0, game.GraphicsDevice.Viewport.Height - coinTexture.Height)
+                random.Next(0, maxX + 1),
+                random.Next(0, maxY + 1)
             );
+
             currentCoin = new Coin(coinTexture, pos);
         }
         else
         {
-            currentCoin = null; // Alle coins verzameld
+            currentCoin = null;
+        }
+    }
+
+    private void CheckForFinishSpawn()
+    {
+        if (score >= 10 && finish == null)
+        {
+            // Spawn huisje rechts-midden, iets kleiner
+            float scale = 0.5f; // halve grootte van de originele texture
+            int finishWidth = (int)(finishTexture.Width * scale);
+            int finishHeight = (int)(finishTexture.Height * scale);
+
+            Vector2 pos = new Vector2(
+                game.GraphicsDevice.Viewport.Width - finishWidth - 20, // dichter bij rechts
+                (game.GraphicsDevice.Viewport.Height - finishHeight) / 2 // precies verticaal gecentreerd
+            );
+
+            finish = new Finish(finishTexture, pos, scale); // Finish class moet scale ondersteunen
         }
     }
 
@@ -79,6 +110,14 @@ public class Level1 : IGameState
         {
             score++;
             SpawnNextCoin(); // Spawn de volgende coin zodra de huidige gepakt is
+        }
+
+        CheckForFinishSpawn();
+
+        if (finish != null && playerBounds.Intersects(finish.GetBounds()))
+        {
+            // Level voltooid
+            //game.ChangeState(new LevelCompleteState(game)); // Of een andere logica
         }
     }
 
@@ -124,6 +163,13 @@ public class Level1 : IGameState
 
         // Teken de speler
         player.Draw(spriteBatch);
+
+        //teken finish line
+        if (finish != null)
+        {
+            finish.Draw(spriteBatch);
+        }
+
 
         spriteBatch.End();
     }
