@@ -15,6 +15,9 @@ public class Level1 : IGameState
     private List<Coin> coins;
     private Texture2D coinTexture;
     private Random random = new Random();
+    private int score = 0;
+    private Texture2D scoreBackground;
+    private SpriteFont scoreFont;
 
     public Level1(Game1 game)
     {
@@ -23,8 +26,15 @@ public class Level1 : IGameState
 
     public void LoadContent()
     {
-        // Background & player
+        // Background
         background = game.Content.Load<Texture2D>("bgLevel1");
+        scoreFont = game.Content.Load<SpriteFont>("scoreFont"); // grote font, bv 48px
+
+        // Maak een kleine texture van 1x1 pixel en kleur hem later lichtgrijs
+        scoreBackground = new Texture2D(game.GraphicsDevice, 1, 1);
+        scoreBackground.SetData(new[] { Color.LightGray });
+        
+        //player
         playerTexture = game.Content.Load<Texture2D>("player");
         player = new Player(new Vector2(400, 240), playerTexture, 4, 4);
 
@@ -53,7 +63,7 @@ public class Level1 : IGameState
             if (playerBounds.Intersects(coins[i].GetBounds()))
             {
                 coins.RemoveAt(i);
-                // eventueel score verhogen of geluid afspelen
+                score++;
             }
         }
     }
@@ -70,6 +80,28 @@ public class Level1 : IGameState
             game.GraphicsDevice.Viewport.Width,
             game.GraphicsDevice.Viewport.Height), Color.White);
 
+        // Score tekst en achtergrond (rechtsboven)
+        string scoreText = $"Coins: {score}/10";
+        Vector2 textSize = scoreFont.MeasureString(scoreText);
+
+        // Achtergrond rechthoek met padding
+        int paddingX = 20;
+        int paddingY = 10;
+        Rectangle backgroundRect = new Rectangle(
+            game.GraphicsDevice.Viewport.Width - (int)textSize.X - paddingX,
+            10,
+            (int)textSize.X + paddingX,
+            (int)textSize.Y + paddingY
+        );
+
+        // Lichtgrijze achtergrond
+        spriteBatch.Draw(scoreBackground, backgroundRect, Color.LightGray);
+
+        // Score tekst
+        spriteBatch.DrawString(scoreFont, scoreText,
+            new Vector2(backgroundRect.X + paddingX / 2, backgroundRect.Y + paddingY / 2),
+            Color.Black);
+
         // Teken de coins
         foreach (var coin in coins)
         {
@@ -81,4 +113,5 @@ public class Level1 : IGameState
 
         spriteBatch.End();
     }
+
 }
