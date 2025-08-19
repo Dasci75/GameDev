@@ -15,6 +15,7 @@ public class Player
     private int frameWidth, frameHeight;
 
     public int Health { get; private set; } = 5;
+    public int Coins { get; set; } = 0;
 
     public bool isDead = false;
     private int deathRow = 4; // row in sprite sheet for death animation

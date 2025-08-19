@@ -182,7 +182,7 @@ public class Level2 : IGameState
 
         foreach (var thief in thieves)
         {
-            thief.Update(gameTime, coins);
+            thief.Update(gameTime, player, game.GraphicsDevice.Viewport.Width, game.GraphicsDevice.Viewport.Height);
         }
 
         CheckForFinishSpawn();

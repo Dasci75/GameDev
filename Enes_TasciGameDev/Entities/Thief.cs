@@ -1,7 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Collections.Generic;
 
 namespace Enes_TasciGameDev.Entities
 {
@@ -10,22 +9,19 @@ namespace Enes_TasciGameDev.Entities
         private Texture2D texture;
         public Vector2 Position;
         private float speed;
-
-        // Animatie
-        private int rows = 4;      // up, right, down, left
-        private int columns = 3;   // frames per row
+        private int rows = 4;
+        private int columns = 3;
         private int currentFrame = 0;
-        private int row = 2;        // start facing down
+        private int row = 2;
         private double timer = 0;
         private double interval = 200; // ms per frame
         private int frameWidth;
         private int frameHeight;
 
-        // Coin target
-        private Coin targetCoin;
-        private double stealDelay = 0.5; // seconden na stelen
-        private double delayTimer = 0;
-        private bool stealing = false;
+        private Vector2 direction;
+        private double changeDirTimer = 0;
+        private double changeDirInterval;
+        private static Random rnd = new Random();
 
         public Thief(Texture2D texture, Vector2 position, float speed)
         {
@@ -35,59 +31,62 @@ namespace Enes_TasciGameDev.Entities
 
             frameWidth = texture.Width / columns;
             frameHeight = texture.Height / rows;
+
+            ChooseRandomDirection();
+            changeDirInterval = rnd.NextDouble() * 2 + 1; // 1–3 seconden
         }
 
-        public void Update(GameTime gameTime, List<Coin> coins)
+        private void ChooseRandomDirection()
         {
-            if (coins.Count == 0) return; // niks om te stelen
-
-            // Kies dichtstbijzijnde coin
-            if (targetCoin == null || !coins.Contains(targetCoin))
-            {
-                float minDist = float.MaxValue;
-                foreach (var coin in coins)
-                {
-                    float dist = Vector2.Distance(Position, coin.Position);
-                    if (dist < minDist)
-                    {
-                        minDist = dist;
-                        targetCoin = coin;
-                    }
-                }
-            }
-
-            if (targetCoin != null)
-            {
-                Vector2 direction = targetCoin.Position - Position;
-
-                if (direction.Length() > speed)
-                {
-                    direction.Normalize();
-                    Position += direction * speed;
-                }
-                else
-                {
-                    // Coin bereikt
-                    coins.Remove(targetCoin);
-                    targetCoin = null;
-                }
-
-                // Animatie row
-                if (Math.Abs(direction.X) > Math.Abs(direction.Y))
-                    row = direction.X > 0 ? 1 : 3;
-                else
-                    row = direction.Y > 0 ? 2 : 0;
-            }
-
-            // Animatie frame update
-            timer += gameTime.ElapsedGameTime.TotalMilliseconds;
-            if (timer > interval)
-            {
-                currentFrame = (currentFrame + 1) % columns;
-                timer = 0;
-            }
+            float angle = (float)(rnd.NextDouble() * Math.PI * 2);
+            direction = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle));
         }
 
+        public void Update(GameTime gameTime, Player player, int screenWidth, int screenHeight)
+        {
+            // Willekeurig richting veranderen
+            changeDirTimer += gameTime.ElapsedGameTime.TotalSeconds;
+            if (changeDirTimer > changeDirInterval)
+            {
+                ChooseRandomDirection();
+                changeDirTimer = 0;
+                changeDirInterval = rnd.NextDouble() * 2 + 1; // nieuwe interval
+            }
+
+            // Beweging
+            Position += direction * speed;
+
+            // Binnen scherm houden
+            Position.X = MathHelper.Clamp(Position.X, 0, screenWidth - frameWidth);
+            Position.Y = MathHelper.Clamp(Position.Y, 0, screenHeight - frameHeight);
+
+            // Animatie row
+            if (Math.Abs(direction.X) > Math.Abs(direction.Y))
+                row = direction.X > 0 ? 2 : 1;
+            else
+                row = direction.Y > 0 ? 0 : 3;
+
+            // Alleen animatie updaten als thief beweegt
+            if (direction != Vector2.Zero)
+            {
+                timer += gameTime.ElapsedGameTime.TotalMilliseconds;
+                if (timer > interval)
+                {
+                    currentFrame = (currentFrame + 1) % columns;
+                    timer = 0;
+                }
+            }
+            else
+            {
+                currentFrame = 0;
+            }
+
+            // Coin stelen
+            if (GetBounds().Intersects(player.GetBounds()) && player.Coins > 0)
+            {
+                player.Coins--;
+            }
+        }
 
         public void Draw(SpriteBatch spriteBatch)
         {
@@ -97,7 +96,10 @@ namespace Enes_TasciGameDev.Entities
 
         public Rectangle GetBounds()
         {
-            return new Rectangle((int)Position.X, (int)Position.Y, frameWidth, frameHeight);
+            // Kleine padding zodat collision makkelijker werkt
+            int padding = 4;
+            return new Rectangle((int)Position.X + padding, (int)Position.Y + padding,
+                                 frameWidth - 2 * padding, frameHeight - 2 * padding);
         }
     }
 }
