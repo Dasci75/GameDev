@@ -30,9 +30,9 @@ public class Player
         Vector2 movement = Vector2.Zero;
         KeyboardState keyboardState = Keyboard.GetState();
 
-        if (keyboardState.IsKeyDown(Keys.W)) movement.Y -= 1;
+        if (keyboardState.IsKeyDown(Keys.Z)) movement.Y -= 1;
         if (keyboardState.IsKeyDown(Keys.S)) movement.Y += 1;
-        if (keyboardState.IsKeyDown(Keys.A)) movement.X -= 1;
+        if (keyboardState.IsKeyDown(Keys.Q)) movement.X -= 1;
         if (keyboardState.IsKeyDown(Keys.D)) movement.X += 1;
 
         if (movement != Vector2.Zero)
