@@ -18,6 +18,7 @@ public class Level1 : IGameState
     private int score = 0;
     private Texture2D scoreBackground;
     private SpriteFont scoreFont;
+    private Coin currentCoin;
 
     public Level1(Game1 game)
     {
@@ -50,6 +51,22 @@ public class Level1 : IGameState
             );
             coins.Add(new Coin(coinTexture, pos));
         }
+        SpawnNextCoin();
+    }
+    private void SpawnNextCoin()
+    {
+        if (score < 10)
+        {
+            Vector2 pos = new Vector2(
+                random.Next(0, game.GraphicsDevice.Viewport.Width - coinTexture.Width),
+                random.Next(0, game.GraphicsDevice.Viewport.Height - coinTexture.Height)
+            );
+            currentCoin = new Coin(coinTexture, pos);
+        }
+        else
+        {
+            currentCoin = null; // Alle coins verzameld
+        }
     }
 
     public void Update(GameTime gameTime)
@@ -58,13 +75,10 @@ public class Level1 : IGameState
 
         Rectangle playerBounds = player.GetBounds();
 
-        for (int i = coins.Count - 1; i >= 0; i--)
+        if (currentCoin != null && playerBounds.Intersects(currentCoin.GetBounds()))
         {
-            if (playerBounds.Intersects(coins[i].GetBounds()))
-            {
-                coins.RemoveAt(i);
-                score++;
-            }
+            score++;
+            SpawnNextCoin(); // Spawn de volgende coin zodra de huidige gepakt is
         }
     }
 
@@ -81,7 +95,7 @@ public class Level1 : IGameState
             game.GraphicsDevice.Viewport.Height), Color.White);
 
         // Score tekst en achtergrond (rechtsboven)
-        string scoreText = $"Coins: {score}/10";
+        string scoreText = $"Coins: {score}";
         Vector2 textSize = scoreFont.MeasureString(scoreText);
 
         // Achtergrond rechthoek met padding
@@ -103,9 +117,9 @@ public class Level1 : IGameState
             Color.Black);
 
         // Teken de coins
-        foreach (var coin in coins)
+        if (currentCoin != null)
         {
-            coin.Draw(spriteBatch);
+            currentCoin.Draw(spriteBatch);
         }
 
         // Teken de speler
