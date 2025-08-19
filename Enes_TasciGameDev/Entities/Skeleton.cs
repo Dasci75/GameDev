@@ -1,46 +1,39 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Enes_TasciGameDev.Entities
 {
-    public class Goblin
+    public class Skeleton
     {
         private Texture2D texture;
         private Vector2 position;
         private float speed;
         private bool stunned = false;
         private double stunTimer = 0;
-        private double stunDuration = 2.0; // 2 seconden
+        private double stunDuration = 1.0;
 
-
-        // Animatie
-        private int rows = 4;
-        private int columns = 3;
+        private int rows = 4;    // 4 directions: up, right, down, left
+        private int columns = 3; // 4 frames per direction
         private int currentFrame = 0;
         private int row = 0;
         private double timer = 0;
-        private double interval = 200; // ms per frame
+        private double interval = 200;
         private int frameWidth;
         private int frameHeight;
 
-        public Goblin(Texture2D texture, Vector2 position, float speed)
+        public Skeleton(Texture2D texture, Vector2 position, float speed)
         {
             this.texture = texture;
             this.position = position;
             this.speed = speed;
 
-            frameWidth = texture.Width / columns;   // 144/3 = 48
-            frameHeight = (texture.Height / rows) + 1;    // 192/4 = 48
+            frameWidth = texture.Width / columns;   // 144 / 4 = 36
+            frameHeight = texture.Height / rows + 1;    // 256 / 4 = 64
         }
 
-        public void Update(GameTime gameTime, Vector2 playerPosition, List<Goblin> allGoblins)
+        public void Update(GameTime gameTime, Vector2 playerPosition, List<Skeleton> allSkeletons)
         {
-            // 1. Handle stunned state
             if (stunned)
             {
                 stunTimer += gameTime.ElapsedGameTime.TotalSeconds;
@@ -49,10 +42,9 @@ namespace Enes_TasciGameDev.Entities
                     stunned = false;
                     stunTimer = 0;
                 }
-                return; // stop met bewegen zolang stunned
+                return;
             }
 
-            // 2. Move towards player
             Vector2 direction = playerPosition - position;
             if (direction != Vector2.Zero)
             {
@@ -60,22 +52,20 @@ namespace Enes_TasciGameDev.Entities
                 position += direction * speed;
             }
 
-            // 3. Separation to avoid stacking
-            foreach (var other in allGoblins)
+            foreach (var other in allSkeletons)
             {
                 if (other == this) continue;
 
                 Vector2 diff = position - other.position;
                 float distance = diff.Length();
 
-                if (distance < frameWidth) // if too close
+                if (distance < frameWidth)
                 {
                     diff.Normalize();
-                    position += diff * (frameWidth - distance) * 0.5f; // push away
+                    position += diff * (frameWidth - distance) * 0.5f;
                 }
             }
 
-            // 4. Update animation
             timer += gameTime.ElapsedGameTime.TotalMilliseconds;
             if (timer > interval)
             {
@@ -84,25 +74,23 @@ namespace Enes_TasciGameDev.Entities
                 timer = 0;
             }
 
-            // 5. Determine row for animation
-            if (direction.X > 0) row = 2;       // right
-            else if (direction.X < 0) row = 1;  // left
-            else if (direction.Y > 0) row = 0;  // down
-            else if (direction.Y < 0) row = 3;  // up
+            // Determine row based on movement
+            if (direction.X > 0) row = 1;       // right
+            else if (direction.X < 0) row = 3;  // left
+            else if (direction.Y > 0) row = 2;  // down
+            else if (direction.Y < 0) row = 0;  // up
         }
 
-        // Nieuwe methode om de goblin te stunnen
         public void Stun()
         {
             stunned = true;
             stunTimer = 0;
         }
 
-
         public void Draw(SpriteBatch spriteBatch)
         {
             Rectangle sourceRect = new Rectangle(currentFrame * frameWidth, row * frameHeight, frameWidth, frameHeight);
-            spriteBatch.Draw(texture, position, sourceRect, Color.White);
+            spriteBatch.Draw(texture, position, sourceRect, stunned ? Color.LightGray : Color.White);
         }
 
         public Rectangle GetBounds()
