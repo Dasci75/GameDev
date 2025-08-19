@@ -1,69 +1,70 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+
 public class Player
 {
-    public Vector2 Position;
+    private Vector2 position;
     private Texture2D texture;
+    private int rows, columns;
+    private int currentFrame;
+    private int row; // current animation row
+    private double timer;
+    private double interval = 100; // milliseconds per frame
+    private int frameWidth, frameHeight;
 
-    // Sprite sheet info
-    private int columns;
-    private int rows;
-    private int currentFrame = 0;
-    private int frameWidth;
-    private int frameHeight;
-    private double animationTimer = 0;
-    private double timePerFrame = 0.1; // seconds per frame
-
-    private float speed = 150f;
-
-    public Player(Texture2D tex, Vector2 startPos, int columns, int rows)
+    public Player(Vector2 position, Texture2D texture, int rows, int columns)
     {
-        texture = tex;
-        Position = startPos;
-        this.columns = columns;
+        this.position = position;
+        this.texture = texture;
         this.rows = rows;
+        this.columns = columns;
 
         frameWidth = texture.Width / columns;
         frameHeight = texture.Height / rows;
+        row = 0;
     }
 
     public void Update(GameTime gameTime)
     {
-        // Movement
-        var ks = Keyboard.GetState();
-        float delta = (float)gameTime.ElapsedGameTime.TotalSeconds;
-        if (ks.IsKeyDown(Keys.Up)) Position.Y -= speed * delta;
-        if (ks.IsKeyDown(Keys.Down)) Position.Y += speed * delta;
-        if (ks.IsKeyDown(Keys.Left)) Position.X -= speed * delta;
-        if (ks.IsKeyDown(Keys.Right)) Position.X += speed * delta;
+        Vector2 movement = Vector2.Zero;
+        KeyboardState keyboardState = Keyboard.GetState();
 
-        // Animation
-        animationTimer += gameTime.ElapsedGameTime.TotalSeconds;
-        if (animationTimer >= timePerFrame)
+        if (keyboardState.IsKeyDown(Keys.W)) movement.Y -= 1;
+        if (keyboardState.IsKeyDown(Keys.S)) movement.Y += 1;
+        if (keyboardState.IsKeyDown(Keys.A)) movement.X -= 1;
+        if (keyboardState.IsKeyDown(Keys.D)) movement.X += 1;
+
+        if (movement != Vector2.Zero)
         {
-            currentFrame++;
-            if (currentFrame >= columns * rows)
-                currentFrame = 0;
-            animationTimer = 0;
+            position += movement * 2f; // speed
+            SetAnimationRow(movement);
+
+            timer += gameTime.ElapsedGameTime.TotalMilliseconds;
+            if (timer > interval)
+            {
+                currentFrame++;
+                if (currentFrame >= columns) currentFrame = 0;
+                timer = 0;
+            }
         }
+        else
+        {
+            currentFrame = 0; // idle
+        }
+    }
+
+    private void SetAnimationRow(Vector2 movement)
+    {
+        if (movement.Y < 0) row = 3; // up
+        else if (movement.Y > 0) row = 0; // down
+        else if (movement.X < 0) row = 1; // left
+        else if (movement.X > 0) row = 2; // right
     }
 
     public void Draw(SpriteBatch spriteBatch)
     {
-        int col = currentFrame % columns;
-        int row = currentFrame / columns;
-
-        Rectangle sourceRectangle = new Rectangle(
-            col * frameWidth,
-            row * frameHeight,
-            frameWidth,
-            frameHeight
-        );
-
-        spriteBatch.Begin();
-        spriteBatch.Draw(texture, Position, sourceRectangle, Color.White);
-        spriteBatch.End();
+        Rectangle sourceRect = new Rectangle(currentFrame * frameWidth, row * frameHeight, frameWidth, frameHeight);
+        spriteBatch.Draw(texture, position, sourceRect, Color.White);
     }
 }
-

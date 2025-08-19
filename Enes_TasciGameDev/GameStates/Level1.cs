@@ -1,12 +1,14 @@
 ﻿using Enes_TasciGameDev;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
+
 public class Level1 : IGameState
 {
-    private Player player;
+    private Game1 game;
+    private Player player;  // Your Player class
     private Texture2D playerTexture;
-
-    private Game1 game; // need the game instance to access Content
+    private KeyboardState previousKeyboardState;
 
     public Level1(Game1 game)
     {
@@ -15,8 +17,9 @@ public class Level1 : IGameState
 
     public void LoadContent()
     {
+        // Load player texture (make sure the file exists in Content)
         playerTexture = game.Content.Load<Texture2D>("player"); // your sprite sheet
-        player = new Player(playerTexture, new Vector2(400, 240), 4, 4); // 8 columns, 13 rows
+        player = new Player(new Vector2(400, 240), playerTexture, rows: 4, columns: 4); // adjust rows/columns to your sprite sheet
     }
 
     public void Update(GameTime gameTime)
@@ -24,10 +27,12 @@ public class Level1 : IGameState
         player.Update(gameTime);
     }
 
+
     public void Draw(SpriteBatch spriteBatch)
     {
+        spriteBatch.Begin();
         game.GraphicsDevice.Clear(Color.CornflowerBlue);
         player.Draw(spriteBatch);
+        spriteBatch.End();
     }
 }
-
