@@ -1,4 +1,5 @@
 ﻿using Enes_TasciGameDev;
+using Enes_TasciGameDev.Entities;
 using Enes_TasciGameDev.Prop;
 using Microsoft.VisualBasic.Devices;
 using Microsoft.Xna.Framework;
@@ -25,6 +26,9 @@ public class Level1 : IGameState
     private Finish finish;
     private bool levelPassed = false;
     private Texture2D overlay;
+    private List<Goblin> goblins;
+    private Texture2D goblinTexture;
+
 
 
 
@@ -36,6 +40,19 @@ public class Level1 : IGameState
 
     public void LoadContent()
     {
+        //goblin enemy spawnen
+        goblinTexture = game.Content.Load<Texture2D>("goblin"); // voeg enemy.png toe aan Content
+        goblins = new List<Goblin>();
+
+        // spawn bv 3 vijanden random
+        for (int i = 0; i < 3; i++)
+        {
+            Vector2 pos = new Vector2(
+                random.Next(0, game.GraphicsDevice.Viewport.Width - goblinTexture.Width),
+                random.Next(0, game.GraphicsDevice.Viewport.Height - goblinTexture.Height)
+            );
+            goblins.Add(new Goblin(goblinTexture, pos, speed: 1.5f));
+        }
         //finish line
         finishTexture = game.Content.Load<Texture2D>("finish"); // Voeg house.png toe aan Content
         finish = null; // nog niet zichtbaar
@@ -128,6 +145,11 @@ public class Level1 : IGameState
             SpawnNextCoin(); // Spawn de volgende coin zodra de huidige gepakt is
         }
 
+        foreach (var goblin in goblins)
+        {
+            goblin.Update(gameTime, player.Position, goblins);
+        }
+
         CheckForFinishSpawn();
 
         if (finish != null && playerBounds.Intersects(finish.GetBounds()))
@@ -178,6 +200,12 @@ public class Level1 : IGameState
 
         // Teken de speler
         player.Draw(spriteBatch);
+
+        //teken enemies
+        foreach (var enemy in goblins)
+        {
+            enemy.Draw(spriteBatch);
+        }
 
         //teken finish line
         if (finish != null)

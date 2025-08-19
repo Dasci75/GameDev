@@ -68,6 +68,10 @@ public class Player
         else if (movement.X < 0) row = 1; // left
         else if (movement.X > 0) row = 2; // right
     }
+    public Vector2 Position
+    {
+        get { return position; }
+    }
     public Rectangle GetBounds()
     {
         int padding = 8; // kleiner dan het frame
