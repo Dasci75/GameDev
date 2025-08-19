@@ -25,7 +25,8 @@ public class Player
         row = 0;
     }
 
-    public void Update(GameTime gameTime)
+
+    public void Update(GameTime gameTime, GraphicsDevice graphicsDevice)
     {
         Vector2 movement = Vector2.Zero;
         KeyboardState keyboardState = Keyboard.GetState();
@@ -38,6 +39,12 @@ public class Player
         if (movement != Vector2.Zero)
         {
             position += movement * 2f; // speed
+
+            // Zorg dat speler binnen het scherm blijft
+            position.X = MathHelper.Clamp(position.X, 0, graphicsDevice.Viewport.Width - frameWidth);
+            position.Y = MathHelper.Clamp(position.Y, 0, graphicsDevice.Viewport.Height - frameHeight);
+
+
             SetAnimationRow(movement);
 
             timer += gameTime.ElapsedGameTime.TotalMilliseconds;

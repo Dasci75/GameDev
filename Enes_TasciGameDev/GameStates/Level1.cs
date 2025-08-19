@@ -26,7 +26,7 @@ public class Level1 : IGameState
 
     public void Update(GameTime gameTime)
     {
-        player.Update(gameTime);
+        player.Update(gameTime, game.GraphicsDevice);
     }
 
 
