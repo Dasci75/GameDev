@@ -12,6 +12,8 @@ public class Player
     private double timer;
     private double interval = 100; // milliseconds per frame
     private int frameWidth, frameHeight;
+    public int Health { get; private set; } = 5; // speler start met 3 levens
+
 
     public Player(Vector2 position, Texture2D texture, int rows, int columns)
     {
@@ -23,6 +25,11 @@ public class Player
         frameWidth = texture.Width / columns;
         frameHeight = texture.Height / rows;
         row = 0;
+    }
+    public void TakeDamage(int amount)
+    {
+        Health -= amount;
+        if (Health < 0) Health = 0;
     }
 
 

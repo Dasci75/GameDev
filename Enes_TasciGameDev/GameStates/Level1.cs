@@ -28,6 +28,10 @@ public class Level1 : IGameState
     private Texture2D overlay;
     private List<Goblin> goblins;
     private Texture2D goblinTexture;
+    private bool gameOver = false;
+    private double damageCooldown = 1.0; // 1 seconde tussen hits
+    private double damageTimer = 0;
+
 
 
 
@@ -51,7 +55,7 @@ public class Level1 : IGameState
                 random.Next(0, game.GraphicsDevice.Viewport.Width - goblinTexture.Width),
                 random.Next(0, game.GraphicsDevice.Viewport.Height - goblinTexture.Height)
             );
-            goblins.Add(new Goblin(goblinTexture, pos, speed: 1.5f));
+            goblins.Add(new Goblin(goblinTexture, pos, speed: 1f));
         }
         //finish line
         finishTexture = game.Content.Load<Texture2D>("finish"); // Voeg house.png toe aan Content
@@ -77,7 +81,7 @@ public class Level1 : IGameState
         overlay = new Texture2D(game.GraphicsDevice, 1, 1);
         overlay.SetData(new[] { Color.Black });
 
-        for (int i = 0; i < 5; i++) // spawn 10 coins random
+        for (int i = 0; i < 5; i++) // spawn 5 coins random
         {
             Vector2 pos = new Vector2(
                 random.Next(0, game.GraphicsDevice.Viewport.Width - coinTexture.Width),
@@ -145,9 +149,26 @@ public class Level1 : IGameState
             SpawnNextCoin(); // Spawn de volgende coin zodra de huidige gepakt is
         }
 
+        damageTimer += gameTime.ElapsedGameTime.TotalSeconds;
+
         foreach (var goblin in goblins)
         {
             goblin.Update(gameTime, player.Position, goblins);
+
+            if (goblin.GetBounds().Intersects(player.GetBounds()) && damageTimer >= damageCooldown)
+            {
+                player.TakeDamage(1);
+                damageTimer = 0;
+
+                goblin.Stun(); // goblin stopt 2 seconden
+                Console.WriteLine($"Player hit! Health: {player.Health}");
+            }
+        }
+
+        if (player.Health <= 0)
+        {
+            gameOver = true;
+            Console.WriteLine("Game Over!");
         }
 
         CheckForFinishSpawn();
@@ -192,11 +213,13 @@ public class Level1 : IGameState
             new Vector2(backgroundRect.X + paddingX / 2, backgroundRect.Y + paddingY / 2),
             Color.Black);
 
-        // Teken de coins
+        // Teken de coins en hp
         if (currentCoin != null)
         {
             currentCoin.Draw(spriteBatch);
         }
+        string healthText = $"Health: {player.Health}";
+        spriteBatch.DrawString(scoreFont, healthText, new Vector2(10, 10), Color.Red);
 
         // Teken de speler
         player.Draw(spriteBatch);
@@ -230,6 +253,24 @@ public class Level1 : IGameState
 
             spriteBatch.DrawString(scoreFont, message, position, Color.Yellow);
         }
+        //gameover scherm
+        if (gameOver)
+        {
+            // semi-transparante overlay
+            spriteBatch.Draw(overlay, new Rectangle(0, 0,
+                game.GraphicsDevice.Viewport.Width,
+                game.GraphicsDevice.Viewport.Height), Color.Black * 0.6f);
+
+            string message = "Game Over!";
+            Vector2 size = scoreFont.MeasureString(message);
+            Vector2 position = new Vector2(
+                (game.GraphicsDevice.Viewport.Width - size.X) / 2,
+                (game.GraphicsDevice.Viewport.Height - size.Y) / 2
+            );
+
+            spriteBatch.DrawString(scoreFont, message, position, Color.Red);
+        }
+
 
 
         spriteBatch.End();

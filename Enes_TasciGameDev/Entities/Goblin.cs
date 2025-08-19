@@ -13,6 +13,10 @@ namespace Enes_TasciGameDev.Entities
         private Texture2D texture;
         private Vector2 position;
         private float speed;
+        private bool stunned = false;
+        private double stunTimer = 0;
+        private double stunDuration = 2.0; // 2 seconden
+
 
         // Animatie
         private int rows = 4;
@@ -36,7 +40,19 @@ namespace Enes_TasciGameDev.Entities
 
         public void Update(GameTime gameTime, Vector2 playerPosition, List<Goblin> allGoblins)
         {
-            // 1. Move towards player
+            // 1. Handle stunned state
+            if (stunned)
+            {
+                stunTimer += gameTime.ElapsedGameTime.TotalSeconds;
+                if (stunTimer >= stunDuration)
+                {
+                    stunned = false;
+                    stunTimer = 0;
+                }
+                return; // stop met bewegen zolang stunned
+            }
+
+            // 2. Move towards player
             Vector2 direction = playerPosition - position;
             if (direction != Vector2.Zero)
             {
@@ -44,7 +60,7 @@ namespace Enes_TasciGameDev.Entities
                 position += direction * speed;
             }
 
-            // 2. Separation to avoid stacking
+            // 3. Separation to avoid stacking
             foreach (var other in allGoblins)
             {
                 if (other == this) continue;
@@ -59,7 +75,7 @@ namespace Enes_TasciGameDev.Entities
                 }
             }
 
-            // 3. Update animation
+            // 4. Update animation
             timer += gameTime.ElapsedGameTime.TotalMilliseconds;
             if (timer > interval)
             {
@@ -68,11 +84,18 @@ namespace Enes_TasciGameDev.Entities
                 timer = 0;
             }
 
-            // 4. Determine row for animation
+            // 5. Determine row for animation
             if (direction.X > 0) row = 2;       // right
             else if (direction.X < 0) row = 1;  // left
             else if (direction.Y > 0) row = 0;  // down
             else if (direction.Y < 0) row = 3;  // up
+        }
+
+        // Nieuwe methode om de goblin te stunnen
+        public void Stun()
+        {
+            stunned = true;
+            stunTimer = 0;
         }
 
 
