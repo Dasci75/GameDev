@@ -145,7 +145,7 @@ public class Level1 : IGameState
         MouseState mouseState = Microsoft.Xna.Framework.Input.Mouse.GetState();
 
 
-        if (gameOver)
+        if (gameOver || levelPassed)
         {
             // Instead of retry button → go back to StartScreen
             if (Microsoft.Xna.Framework.Input.Keyboard.GetState().IsKeyDown(Keys.Enter))
@@ -263,7 +263,7 @@ public class Level1 : IGameState
                 game.GraphicsDevice.Viewport.Width,
                 game.GraphicsDevice.Viewport.Height), Color.Black * 0.6f);
 
-            string message = "Level Complete!";
+            string message = "Level Complete!\nPress Enter to return to Menu";
             Vector2 size = scoreFont.MeasureString(message);
             Vector2 position = new Vector2(
                 (game.GraphicsDevice.Viewport.Width - size.X) / 2,
