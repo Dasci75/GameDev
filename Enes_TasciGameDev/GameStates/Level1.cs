@@ -45,7 +45,20 @@ public class Level1 : IGameState
     public void Update(GameTime gameTime)
     {
         player.Update(gameTime, game.GraphicsDevice);
+
+        Rectangle playerBounds = player.GetBounds();
+
+        for (int i = coins.Count - 1; i >= 0; i--)
+        {
+            if (playerBounds.Intersects(coins[i].GetBounds()))
+            {
+                coins.RemoveAt(i);
+                // eventueel score verhogen of geluid afspelen
+            }
+        }
     }
+
+
 
 
     public void Draw(SpriteBatch spriteBatch)

@@ -68,6 +68,18 @@ public class Player
         else if (movement.X < 0) row = 1; // left
         else if (movement.X > 0) row = 2; // right
     }
+    public Rectangle GetBounds()
+    {
+        int padding = 8; // kleiner dan het frame
+        return new Rectangle(
+            (int)position.X + padding,
+            (int)position.Y + padding,
+            frameWidth - 2 * padding,
+            frameHeight - 2 * padding
+        );
+    }
+
+
 
     public void Draw(SpriteBatch spriteBatch)
     {
