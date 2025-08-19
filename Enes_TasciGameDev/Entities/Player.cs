@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System.Data;
 
 public class Player
 {
@@ -12,8 +13,12 @@ public class Player
     private double timer;
     private double interval = 100; // milliseconds per frame
     private int frameWidth, frameHeight;
-    public int Health { get; private set; } = 5; // speler start met 3 levens
 
+    public int Health { get; private set; } = 5;
+
+    public bool isDead = false;
+    private int deathRow = 4; // row in sprite sheet for death animation
+    private int deathFramesCount = 4; // number of frames in death animation
 
     public Player(Vector2 position, Texture2D texture, int rows, int columns)
     {
@@ -26,19 +31,40 @@ public class Player
         frameHeight = texture.Height / rows;
         row = 0;
     }
+
     public void TakeDamage()
     {
         if (Health > 0)
+        {
             Health--;
-    }
-    public bool IsDead()
-    {
-        return Health <= 0;
+            if (Health <= 0)
+                Die();
+        }
     }
 
+    private void Die()
+    {
+        isDead = true;
+        currentFrame = 0;
+        row = deathRow;
+    }
 
     public void Update(GameTime gameTime, GraphicsDevice graphicsDevice)
     {
+        if (isDead)
+        {
+            // update death animation
+            timer += gameTime.ElapsedGameTime.TotalMilliseconds;
+            if (timer > interval)
+            {
+                currentFrame++;
+                if (currentFrame >= deathFramesCount)
+                    currentFrame = deathFramesCount - 1; // stop at last frame
+                timer = 0;
+            }
+            return; // skip movement updates
+        }
+
         Vector2 movement = Vector2.Zero;
         KeyboardState keyboardState = Keyboard.GetState();
 
@@ -49,12 +75,10 @@ public class Player
 
         if (movement != Vector2.Zero)
         {
-            position += movement * 2f; // speed
+            position += movement * 2f;
 
-            // Zorg dat speler binnen het scherm blijft
             position.X = MathHelper.Clamp(position.X, 0, graphicsDevice.Viewport.Width - frameWidth);
             position.Y = MathHelper.Clamp(position.Y, 0, graphicsDevice.Viewport.Height - frameHeight);
-
 
             SetAnimationRow(movement);
 
@@ -71,14 +95,6 @@ public class Player
             currentFrame = 0; // idle
         }
     }
-
-    private void SetAnimationRow(Vector2 movement)
-    {
-        if (movement.Y < 0) row = 3; // up
-        else if (movement.Y > 0) row = 0; // down
-        else if (movement.X < 0) row = 1; // left
-        else if (movement.X > 0) row = 2; // right
-    }
     public Vector2 Position
     {
         get { return position; }
@@ -94,7 +110,13 @@ public class Player
         );
     }
 
-
+    private void SetAnimationRow(Vector2 movement)
+    {
+        if (movement.Y < 0) row = 3; // up
+        else if (movement.Y > 0) row = 0; // down
+        else if (movement.X < 0) row = 1; // left
+        else if (movement.X > 0) row = 2; // right
+    }
 
     public void Draw(SpriteBatch spriteBatch)
     {

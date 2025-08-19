@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.Reflection.Metadata;
 
 public class Level1 : IGameState
 {
@@ -136,13 +137,22 @@ public class Level1 : IGameState
             finish = new Finish(finishTexture, pos, scale); // Finish class moet scale ondersteunen
         }
     }
+    
+
 
     public void Update(GameTime gameTime)
     {
+        MouseState mouseState = Microsoft.Xna.Framework.Input.Mouse.GetState();
+
+
         if (gameOver)
         {
-            // Als het spel voorbij is, stop alle bewegingen
-            return; // exit de update meteen
+            // Instead of retry button → go back to StartScreen
+            if (Microsoft.Xna.Framework.Input.Keyboard.GetState().IsKeyDown(Keys.Enter))
+            {
+                game.ChangeState(new StartScreen(game));
+            }
+            return; // stop updating the level
         }
 
         player.Update(gameTime, game.GraphicsDevice);
@@ -171,7 +181,7 @@ public class Level1 : IGameState
                     // Stun de goblin 2 sec
                     goblin.Stun(); // Je moet stun functie toevoegen in Goblin
 
-                    if (player.IsDead())
+                    if (player.isDead)
                     {
                         gameOver = true;
                         Console.WriteLine("Game Over!");
@@ -270,7 +280,7 @@ public class Level1 : IGameState
                 game.GraphicsDevice.Viewport.Width,
                 game.GraphicsDevice.Viewport.Height), Color.Black * 0.6f);
 
-            string message = "Game Over!";
+            string message = "Game Over!\nPress Enter to return to Menu";
             Vector2 size = scoreFont.MeasureString(message);
             Vector2 position = new Vector2(
                 (game.GraphicsDevice.Viewport.Width - size.X) / 2,
