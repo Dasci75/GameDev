@@ -2,6 +2,8 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
+using System.Collections.Generic;
 
 public class Level1 : IGameState
 {
@@ -10,6 +12,9 @@ public class Level1 : IGameState
     private Texture2D playerTexture;
     private Texture2D background;
     private KeyboardState previousKeyboardState;
+    private List<Coin> coins;
+    private Texture2D coinTexture;
+    private Random random = new Random();
 
     public Level1(Game1 game)
     {
@@ -18,10 +23,23 @@ public class Level1 : IGameState
 
     public void LoadContent()
     {
-        // Load player texture (make sure the file exists in Content)
-        background = game.Content.Load<Texture2D>("bgLevel1"); // Naam zonder extensie
-        playerTexture = game.Content.Load<Texture2D>("player"); // your sprite sheet
-        player = new Player(new Vector2(400, 240), playerTexture, rows: 4, columns: 4); // adjust rows/columns to your sprite sheet
+        // Background & player
+        background = game.Content.Load<Texture2D>("bgLevel1");
+        playerTexture = game.Content.Load<Texture2D>("player");
+        player = new Player(new Vector2(400, 240), playerTexture, 4, 4);
+
+        // Coins
+        coinTexture = game.Content.Load<Texture2D>("coin"); // voeg coin.png toe aan Content
+        coins = new List<Coin>();
+
+        for (int i = 0; i < 10; i++) // spawn 10 coins random
+        {
+            Vector2 pos = new Vector2(
+                random.Next(0, game.GraphicsDevice.Viewport.Width - coinTexture.Width),
+                random.Next(0, game.GraphicsDevice.Viewport.Height - coinTexture.Height)
+            );
+            coins.Add(new Coin(coinTexture, pos));
+        }
     }
 
     public void Update(GameTime gameTime)
@@ -38,6 +56,12 @@ public class Level1 : IGameState
         spriteBatch.Draw(background, new Rectangle(0, 0,
             game.GraphicsDevice.Viewport.Width,
             game.GraphicsDevice.Viewport.Height), Color.White);
+
+        // Teken de coins
+        foreach (var coin in coins)
+        {
+            coin.Draw(spriteBatch);
+        }
 
         // Teken de speler
         player.Draw(spriteBatch);
