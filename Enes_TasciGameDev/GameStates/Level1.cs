@@ -66,21 +66,29 @@ public class Level1 : IGameState
     {
         if (score < 10)
         {
-            int maxX = Math.Max(0, game.GraphicsDevice.Viewport.Width - coinTexture.Width);
-            int maxY = Math.Max(0, game.GraphicsDevice.Viewport.Height - coinTexture.Height);
+            float scale = 0.1f; //zelfde als in Coin
+            int coinWidth = (int)(coinTexture.Width * scale);
+            int coinHeight = (int)(coinTexture.Height * scale);
 
-            Vector2 pos = new Vector2(
-                random.Next(0, maxX + 1),
-                random.Next(0, maxY + 1)
-            );
+            int screenWidth = game.GraphicsDevice.Viewport.Width;
+            int screenHeight = game.GraphicsDevice.Viewport.Height;
 
-            currentCoin = new Coin(coinTexture, pos);
+            int x = random.Next(0, screenWidth - coinWidth);
+            int y = random.Next(0, screenHeight - coinHeight);
+
+            currentCoin = new Coin(coinTexture, new Vector2(x, y), scale);
+
+            Console.WriteLine($"Spawn coin at: {x}, {y}");
         }
         else
         {
             currentCoin = null;
         }
     }
+
+
+
+
 
     private void CheckForFinishSpawn()
     {
