@@ -1,6 +1,7 @@
 ﻿using Enes_TasciGameDev.Obs;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Collections.Generic;
 
 namespace Enes_TasciGameDev.Entities
@@ -17,7 +18,7 @@ namespace Enes_TasciGameDev.Entities
         private int rows = 4;
         private int columns = 3;
         private int currentFrame = 0;
-        private int row = 0;
+        private int row = 2; // Default to down animation (row 2)
         private double timer = 0;
         private double interval = 200; // milliseconds
         private int frameWidth;
@@ -35,13 +36,14 @@ namespace Enes_TasciGameDev.Entities
         public Skeleton(Texture2D texture, Vector2 position, float speed, List<Vector2> patrolPoints)
         {
             this.texture = texture;
-            this.Position = position;
+            Position = position;
             this.speed = speed;
-            this.patrolPoints = patrolPoints;
-
+            this.patrolPoints = patrolPoints ?? new List<Vector2>(); // Ensure patrolPoints is never null
             frameWidth = texture.Width / columns;
             frameHeight = (texture.Height / rows) + 1;
         }
+
+        public override Vector2 Position { get; set; } // Use the virtual property from Enemy
 
         public override Rectangle GetBounds()
         {
@@ -81,10 +83,30 @@ namespace Enes_TasciGameDev.Entities
                 direction.Normalize();
                 Vector2 newPosition = Position + direction * speed;
 
+                // Check collisions with obstacles
+                bool collisionDetected = false;
+                Rectangle newBounds = new Rectangle((int)newPosition.X, (int)newPosition.Y, frameWidth, frameHeight);
+                foreach (var obstacle in obstacles)
+                {
+                    if (newBounds.Intersects(obstacle.Bounds))
+                    {
+                        collisionDetected = true;
+                        newPosition = Position; // Revert to previous position
+                        break;
+                    }
+                }
+
+                // Update position if no collision
+                if (!collisionDetected)
+                {
+                    Position = newPosition;
+                }
+
                 // Clamp position to stay within screen boundaries
-                newPosition.X = MathHelper.Clamp(newPosition.X, 0, screenWidth - frameWidth);
-                newPosition.Y = MathHelper.Clamp(newPosition.Y, 0, screenHeight - frameHeight);
-                Position = newPosition;
+                Position = new Vector2(
+                    MathHelper.Clamp(Position.X, 0, screenWidth - frameWidth),
+                    MathHelper.Clamp(Position.Y, 0, screenHeight - frameHeight)
+                );
 
                 // Avoid other enemies
                 foreach (var other in enemies)
@@ -99,7 +121,7 @@ namespace Enes_TasciGameDev.Entities
                     }
                 }
 
-                // Re-clamp after separation to ensure staying on screen
+                // Re-clamp after separation
                 Position = new Vector2(
                     MathHelper.Clamp(Position.X, 0, screenWidth - frameWidth),
                     MathHelper.Clamp(Position.Y, 0, screenHeight - frameHeight)
@@ -115,11 +137,21 @@ namespace Enes_TasciGameDev.Entities
                 timer = 0;
             }
 
-            // Animation row based on movement direction
-            if (direction.X > 0) row = 1;      // right
-            else if (direction.X < 0) row = 3; // left
-            else if (direction.Y > 0) row = 2; // down
-            else if (direction.Y < 0) row = 0; // up
+            // Animation row based on movement direction (prioritize dominant direction)
+            if (distance > 0) // Only update animation if moving
+            {
+                float absX = Math.Abs(direction.X);
+                float absY = Math.Abs(direction.Y);
+                if (absY > absX) // Prioritize vertical movement
+                {
+                    row = direction.Y > 0 ? 2 : 0; // Down (2), Up (0)
+                }
+                else // Horizontal movement or equal components
+                {
+                    row = direction.X > 0 ? 1 : 3; // Right (1), Left (3)
+                }
+            }
+            // Else, keep the last row (default is 2 for down)
         }
 
         public override void Draw(SpriteBatch spriteBatch)

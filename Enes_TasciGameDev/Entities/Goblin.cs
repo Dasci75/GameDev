@@ -17,7 +17,7 @@ namespace Enes_TasciGameDev.Entities
         private int rows = 4;
         private int columns = 3;
         private int currentFrame = 0;
-        private int row = 0;
+        private int row = 0; // Default to down animation (row 0)
         private double timer = 0;
         private double interval = 200; // ms per frame
         private int frameWidth;
@@ -32,7 +32,7 @@ namespace Enes_TasciGameDev.Entities
             frameHeight = (texture.Height / rows) + 1;
         }
 
-        public override Vector2 Position { get; set; } // This should now work
+        public override Vector2 Position { get; set; } // Use the virtual property from Enemy
 
         public override Rectangle GetBounds()
         {
@@ -98,7 +98,7 @@ namespace Enes_TasciGameDev.Entities
                 Vector2 diff = Position - other.Position;
                 float distance = diff.Length();
 
-                if (distance < frameWidth) // If too close
+                if (distance < frameWidth && distance > 0) // If too close
                 {
                     diff.Normalize();
                     Position += diff * (frameWidth - distance) * 0.5f; // Push away
@@ -114,17 +114,27 @@ namespace Enes_TasciGameDev.Entities
                 timer = 0;
             }
 
-            // Determine row for animation
-            if (direction.X > 0) row = 2;       // Right
-            else if (direction.X < 0) row = 1;  // Left
-            else if (direction.Y > 0) row = 0;  // Down
-            else if (direction.Y < 0) row = 3;  // Up
+            // Animation row based on movement direction (prioritize dominant direction)
+            float distanceToPlayer = (playerPosition - Position).Length();
+            if (distanceToPlayer > 0) 
+            {
+                float absX = Math.Abs(direction.X);
+                float absY = Math.Abs(direction.Y);
+                if (absY > absX) 
+                {
+                    row = direction.Y > 0 ? 0 : 3; // Down (0), Up (3)
+                }
+                else 
+                {
+                    row = direction.X > 0 ? 2 : 1; // Right (2), Left (1)
+                }
+            }
         }
 
         public override void Draw(SpriteBatch spriteBatch)
         {
             Rectangle sourceRect = new Rectangle(currentFrame * frameWidth, row * frameHeight, frameWidth, frameHeight);
-            spriteBatch.Draw(texture, Position, sourceRect, Color.White);
+            spriteBatch.Draw(texture, Position, sourceRect, stunned ? Color.LightGray : Color.White);
         }
 
         public override void Stun()
