@@ -36,7 +36,7 @@ public class Dog
     {
         velocity = Vector2.Zero;
         KeyboardState keyboardState = Keyboard.GetState();
-
+        
         // pijltjestoetsen besturing
         if (keyboardState.IsKeyDown(Keys.Left))
         {

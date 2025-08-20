@@ -4,6 +4,7 @@ using Enes_TasciGameDev.Factories;
 using Enes_TasciGameDev.Items;
 using Enes_TasciGameDev.Obs;
 using Enes_TasciGameDev.Prop;
+using Microsoft.VisualBasic.Logging;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -40,6 +41,9 @@ namespace Enes_TasciGameDev
         private HashSet<int> triggeredPowerups = new HashSet<int>();
         private List<Obstacle> obstacles;
 
+        private Dog dog;
+        private Texture2D dogTexture;
+
         public Level2(Game1 game)
         {
             this.game = game;
@@ -48,6 +52,10 @@ namespace Enes_TasciGameDev
 
         public void LoadContent()
         {
+            //create dog
+            dogTexture = game.Content.Load<Texture2D>("dog");
+            dog = new Dog(new Vector2(200, 200), dogTexture, rows: 2, columns: 3);
+
             // Textures
             background = game.Content.Load<Texture2D>("bgLevel2");
             playerTexture = game.Content.Load<Texture2D>("player");
@@ -149,6 +157,8 @@ namespace Enes_TasciGameDev
 
         public void Update(GameTime gameTime)
         {
+            dog.Update(gameTime, game.GraphicsDevice, null);
+
             if (gameOver || levelPassed)
             {
                 var keyboard = Keyboard.GetState();
@@ -169,13 +179,13 @@ namespace Enes_TasciGameDev
 
                 if (player.Coins == 1 && !triggeredPowerups.Contains(1))
                 {
-                    SpawnPowerUp(PowerUpType.HealthBoost, healthBoostTexture, 0.03f);
+                    SpawnPowerUp(PowerUpType.HealthBoost, healthBoostTexture, 0.02f);
                     triggeredPowerups.Add(1);
                 }
 
                 if (player.Coins == 3 && !triggeredPowerups.Contains(3))
                 {
-                    SpawnPowerUp(PowerUpType.SpeedBoost, speedBoostTexture, 0.08f);
+                    SpawnPowerUp(PowerUpType.SpeedBoost, speedBoostTexture, 0.1f);
                     triggeredPowerups.Add(3);
                 }
 
@@ -251,6 +261,9 @@ namespace Enes_TasciGameDev
 
             // Player
             player.Draw(spriteBatch);
+
+            //draw dog
+            dog.Draw(spriteBatch);
 
             // Enemies
             foreach (var enemy in enemies)
