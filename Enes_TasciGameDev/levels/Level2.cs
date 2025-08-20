@@ -31,6 +31,16 @@ public class Level2 : IGameState
     private bool gameOver = false;
     private double damageCooldown = 1.0;
     private double damageTimer = 0;
+    private List<PowerUp> powerUps;
+
+    private Texture2D healthBoostTexture;
+    private Texture2D speedBoostTexture;
+    private bool healthBoostSpawned = false;
+    private bool speedBoostSpawned = false;
+
+    private HashSet<int> triggeredPowerups = new HashSet<int>();
+
+
 
     public Level2(Game1 game)
     {
@@ -39,6 +49,11 @@ public class Level2 : IGameState
 
     public void LoadContent()
     {
+        // PowerUps
+        powerUps = new List<PowerUp>();
+        healthBoostTexture = game.Content.Load<Texture2D>("healthPowerUp");
+        speedBoostTexture = game.Content.Load<Texture2D>("speedPowerUp");
+
         // Different background for Level2
         background = game.Content.Load<Texture2D>("bgLevel2");
 
@@ -135,15 +150,7 @@ public class Level2 : IGameState
         {
             var keyboard = Keyboard.GetState();
 
-            if (keyboard.IsKeyDown(Keys.Enter))
-            {
-                if (levelPassed)
-                    game.ChangeState(new StartScreen(game)); // After Level2, go back to menu (or make Level3 later)
-                else
-                    game.ChangeState(new StartScreen(game));
-            }
-
-            if (keyboard.IsKeyDown(Keys.Tab))
+            if (keyboard.IsKeyDown(Keys.Enter) || keyboard.IsKeyDown(Keys.Tab))
             {
                 game.ChangeState(new StartScreen(game));
             }
@@ -152,32 +159,58 @@ public class Level2 : IGameState
         }
 
         player.Update(gameTime, game.GraphicsDevice);
-
         Rectangle playerBounds = player.GetBounds();
 
+        // --- Coin pickup ---
         if (currentCoin != null && playerBounds.Intersects(currentCoin.GetBounds()))
         {
             player.AddCoin();
             SpawnNextCoin();
+
+            // PowerUp triggers
+            if (player.Coins == 1 && !triggeredPowerups.Contains(1))
+            {
+                SpawnPowerUp(PowerUpType.HealthBoost, healthBoostTexture, 0.03f);
+                triggeredPowerups.Add(1);
+            }
+
+            if (player.Coins == 3 && !triggeredPowerups.Contains(3))
+            {
+                SpawnPowerUp(PowerUpType.SpeedBoost, speedBoostTexture, 0.08f);
+                triggeredPowerups.Add(3);
+            }
+
+            // Finish check (laatste coin gepakt)
+            if (player.Coins >= 7 && finish == null)
+            {
+                CheckForFinishSpawn();
+            }
         }
 
+        // --- Thieves ---
         foreach (var thief in thieves)
         {
             thief.Update(gameTime, player, game.GraphicsDevice.Viewport.Width, game.GraphicsDevice.Viewport.Height);
 
-            if (thief.GetBounds().Intersects(player.GetBounds()))
+            if (thief.GetBounds().Intersects(playerBounds))
             {
                 player.RemoveCoin();
+
+                // Reset triggeredPowerups als player terugvalt onder een drempel
+                if (player.Coins < 1 && triggeredPowerups.Contains(1))
+                    triggeredPowerups.Remove(1);
+
+                if (player.Coins < 3 && triggeredPowerups.Contains(3))
+                    triggeredPowerups.Remove(3);
             }
         }
 
-
-
+        // --- Skeletons ---
         foreach (var skeleton in skeletons)
         {
             skeleton.Update(gameTime, player.Position, skeletons);
 
-            if (skeleton.GetBounds().Intersects(player.GetBounds()))
+            if (skeleton.GetBounds().Intersects(playerBounds))
             {
                 damageTimer += gameTime.ElapsedGameTime.TotalSeconds;
                 if (damageTimer >= damageCooldown)
@@ -192,16 +225,26 @@ public class Level2 : IGameState
             }
         }
 
-        foreach (var thief in thieves)
-        {
-            thief.Update(gameTime, player, game.GraphicsDevice.Viewport.Width, game.GraphicsDevice.Viewport.Height);
-        }
+        // --- PowerUps ---
+        foreach (var powerUp in powerUps)
+            powerUp.Update(player);
 
-        CheckForFinishSpawn();
-
+        // --- Finish ---
         if (finish != null && playerBounds.Intersects(finish.GetBounds()))
             levelPassed = true;
     }
+
+    // Helper om powerups te spawnen
+    private void SpawnPowerUp(PowerUpType type, Texture2D texture, float scale)
+    {
+        Vector2 pos = new Vector2(
+            random.Next(0, game.GraphicsDevice.Viewport.Width - 50),
+            random.Next(0, game.GraphicsDevice.Viewport.Height - 50)
+        );
+
+        powerUps.Add(new PowerUp(pos, type, texture, scale));
+    }
+
 
     public void Draw(SpriteBatch spriteBatch)
     {
@@ -258,6 +301,10 @@ public class Level2 : IGameState
 
             spriteBatch.DrawString(scoreFont, message, position, Color.Yellow);
         }
+
+        foreach (var powerUp in powerUps)
+            powerUp.Draw(spriteBatch);
+
 
         if (gameOver)
         {
