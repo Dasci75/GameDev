@@ -1,13 +1,14 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Enes_TasciGameDev.Obs;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Collections.Generic;
 
 namespace Enes_TasciGameDev.Entities
 {
-    public class Thief
+    public class Thief : Enemy
     {
         private Texture2D texture;
-        public Vector2 Position;
         private float speed;
         private int rows = 4;
         private int columns = 3;
@@ -26,7 +27,6 @@ namespace Enes_TasciGameDev.Entities
         private double stealCooldown = 1.0;
         private double stealTimer = 0;
 
-
         public Thief(Texture2D texture, Vector2 position, float speed)
         {
             this.texture = texture;
@@ -37,7 +37,7 @@ namespace Enes_TasciGameDev.Entities
             frameHeight = (texture.Height / rows) + 1;
 
             ChooseRandomDirection();
-            changeDirInterval = rnd.NextDouble() * 2 + 1; // 1–3 seconden
+            changeDirInterval = rnd.NextDouble() * 2 + 1; // 1–3 seconds
         }
 
         private void ChooseRandomDirection()
@@ -46,46 +46,43 @@ namespace Enes_TasciGameDev.Entities
             direction = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle));
         }
 
-        public void Update(GameTime gameTime, Player player, int screenWidth, int screenHeight)
+        public override Rectangle GetBounds()
         {
-            // Willekeurig richting veranderen
+            int padding = 4;
+            return new Rectangle((int)Position.X + padding, (int)Position.Y + padding,
+                                frameWidth - 2 * padding, frameHeight - 2 * padding);
+        }
+
+        public override void Update(GameTime gameTime, Vector2 playerPosition, List<Enemy> enemies, List<Obstacle> obstacles, int screenWidth, int screenHeight)
+        {
+            // Random direction change
             changeDirTimer += gameTime.ElapsedGameTime.TotalSeconds;
             if (changeDirTimer > changeDirInterval)
             {
                 ChooseRandomDirection();
                 changeDirTimer = 0;
-                changeDirInterval = rnd.NextDouble() * 2 + 1; // nieuwe interval
+                changeDirInterval = rnd.NextDouble() * 2 + 1; // new interval
             }
 
-            // Beweging
-            Position += direction * speed;
+            // Movement
+            Vector2 newPosition = Position + direction * speed;
 
-            // Botsing met randen
-            if (Position.X <= 0 || Position.X >= screenWidth - frameWidth)
-            {
-                direction.X *= -1; // keer horizontale richting om
-                Position.X = MathHelper.Clamp(Position.X, 0, screenWidth - frameWidth);
-            }
+            // Clamp position to stay within screen boundaries
+            newPosition.X = MathHelper.Clamp(newPosition.X, 0, screenWidth - frameWidth);
+            newPosition.Y = MathHelper.Clamp(newPosition.Y, 0, screenHeight - frameHeight);
+            Position = newPosition;
 
-            if (Position.Y <= 0 || Position.Y >= screenHeight - frameHeight)
-            {
-                direction.Y *= -1; // keer verticale richting om
-                Position.Y = MathHelper.Clamp(Position.Y, 0, screenHeight - frameHeight);
-            }
-
-
-            // Animatie row
+            // Animation row
             if (Math.Abs(direction.X) > Math.Abs(direction.Y))
             {
-                row = direction.X > 0 ? 1 : 3; // rechts : links
+                row = direction.X > 0 ? 1 : 3; // right : left
             }
             else
             {
-                row = direction.Y > 0 ? 2 : 0; // omlaag : omhoog
+                row = direction.Y > 0 ? 2 : 0; // down : up
             }
 
-
-            // Alleen animatie updaten als thief beweegt
+            // Update animation if moving
             if (direction != Vector2.Zero)
             {
                 timer += gameTime.ElapsedGameTime.TotalMilliseconds;
@@ -100,30 +97,23 @@ namespace Enes_TasciGameDev.Entities
                 currentFrame = 0;
             }
 
-            // Coin stelen
+            // Coin stealing
             stealTimer += gameTime.ElapsedGameTime.TotalSeconds;
-
-            // Coin stelen
-            if (GetBounds().Intersects(player.GetBounds()) && player.Coins > 0 && stealTimer >= stealCooldown)
+            if (GetBounds().Intersects(new Rectangle((int)playerPosition.X, (int)playerPosition.Y, 32, 32)) && stealTimer >= stealCooldown)
             {
-                player.Coins--;
                 stealTimer = 0;
             }
-
         }
 
-        public void Draw(SpriteBatch spriteBatch)
+        public override void Draw(SpriteBatch spriteBatch)
         {
             Rectangle sourceRect = new Rectangle(currentFrame * frameWidth, row * frameHeight, frameWidth, frameHeight);
             spriteBatch.Draw(texture, Position, sourceRect, Color.White);
         }
 
-        public Rectangle GetBounds()
+        public override void Stun()
         {
-            // Kleine padding zodat collision makkelijker werkt
-            int padding = 4;
-            return new Rectangle((int)Position.X + padding, (int)Position.Y + padding,
-                                 frameWidth - 2 * padding, frameHeight - 2 * padding);
+            // Thief doesn't support stunning
         }
     }
 }

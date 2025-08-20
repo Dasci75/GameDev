@@ -2,23 +2,18 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Enes_TasciGameDev.Obs;
+using Enes_TasciGameDev.Entities;
 
 namespace Enes_TasciGameDev.Entities
 {
-    public class Goblin
+    public class Goblin : Enemy
     {
         private Texture2D texture;
-        private Vector2 position;
         private float speed;
         private bool stunned = false;
         private double stunTimer = 0;
-        private double stunDuration = 2.0; // 2 seconden
-
-
-        // Animatie
+        private double stunDuration = 2.0; // 2 seconds
         private int rows = 4;
         private int columns = 3;
         private int currentFrame = 0;
@@ -31,16 +26,22 @@ namespace Enes_TasciGameDev.Entities
         public Goblin(Texture2D texture, Vector2 position, float speed)
         {
             this.texture = texture;
-            this.position = position;
+            Position = position; // Use the Position property from Enemy
             this.speed = speed;
-
-            frameWidth = texture.Width / columns;   // 144/3 = 48
-            frameHeight = (texture.Height / rows) + 1;    // 192/4 = 48
+            frameWidth = texture.Width / columns;
+            frameHeight = (texture.Height / rows) + 1;
         }
 
-        public void Update(GameTime gameTime, Vector2 playerPosition, List<Goblin> allGoblins)
+        public override Vector2 Position { get; set; } // This should now work
+
+        public override Rectangle GetBounds()
         {
-            // 1. Handle stunned state
+            return new Rectangle((int)Position.X, (int)Position.Y, frameWidth, frameHeight);
+        }
+
+        public override void Update(GameTime gameTime, Vector2 playerPosition, List<Enemy> enemies, List<Obstacle> obstacles, int screenWidth, int screenHeight)
+        {
+            // Handle stunned state
             if (stunned)
             {
                 stunTimer += gameTime.ElapsedGameTime.TotalSeconds;
@@ -49,33 +50,62 @@ namespace Enes_TasciGameDev.Entities
                     stunned = false;
                     stunTimer = 0;
                 }
-                return; // stop met bewegen zolang stunned
+                return; // Stop moving while stunned
             }
 
-            // 2. Move towards player
-            Vector2 direction = playerPosition - position;
+            // Calculate proposed new position
+            Vector2 direction = playerPosition - Position;
+            Vector2 newPosition = Position;
             if (direction != Vector2.Zero)
             {
                 direction.Normalize();
-                position += direction * speed;
+                newPosition = Position + direction * speed;
             }
 
-            // 3. Separation to avoid stacking
-            foreach (var other in allGoblins)
+            // Check collisions with obstacles
+            bool collisionDetected = false;
+            if (obstacles != null)
             {
-                if (other == this) continue;
+                Rectangle newGoblinBounds = new Rectangle(
+                    (int)newPosition.X,
+                    (int)newPosition.Y,
+                    frameWidth,
+                    frameHeight
+                );
 
-                Vector2 diff = position - other.position;
-                float distance = diff.Length();
-
-                if (distance < frameWidth) // if too close
+                foreach (var obstacle in obstacles)
                 {
-                    diff.Normalize();
-                    position += diff * (frameWidth - distance) * 0.5f; // push away
+                    if (newGoblinBounds.Intersects(obstacle.Bounds))
+                    {
+                        collisionDetected = true;
+                        newPosition = Position; // Revert to previous position
+                        break;
+                    }
                 }
             }
 
-            // 4. Update animation
+            // Update position if no collision
+            if (!collisionDetected)
+            {
+                Position = newPosition;
+            }
+
+            // Separation to avoid stacking with other enemies
+            foreach (var other in enemies)
+            {
+                if (other == this) continue;
+
+                Vector2 diff = Position - other.Position;
+                float distance = diff.Length();
+
+                if (distance < frameWidth) // If too close
+                {
+                    diff.Normalize();
+                    Position += diff * (frameWidth - distance) * 0.5f; // Push away
+                }
+            }
+
+            // Update animation
             timer += gameTime.ElapsedGameTime.TotalMilliseconds;
             if (timer > interval)
             {
@@ -84,30 +114,23 @@ namespace Enes_TasciGameDev.Entities
                 timer = 0;
             }
 
-            // 5. Determine row for animation
-            if (direction.X > 0) row = 2;       // right
-            else if (direction.X < 0) row = 1;  // left
-            else if (direction.Y > 0) row = 0;  // down
-            else if (direction.Y < 0) row = 3;  // up
+            // Determine row for animation
+            if (direction.X > 0) row = 2;       // Right
+            else if (direction.X < 0) row = 1;  // Left
+            else if (direction.Y > 0) row = 0;  // Down
+            else if (direction.Y < 0) row = 3;  // Up
         }
 
-        // Nieuwe methode om de goblin te stunnen
-        public void Stun()
+        public override void Draw(SpriteBatch spriteBatch)
+        {
+            Rectangle sourceRect = new Rectangle(currentFrame * frameWidth, row * frameHeight, frameWidth, frameHeight);
+            spriteBatch.Draw(texture, Position, sourceRect, Color.White);
+        }
+
+        public override void Stun()
         {
             stunned = true;
             stunTimer = 0;
-        }
-
-
-        public void Draw(SpriteBatch spriteBatch)
-        {
-            Rectangle sourceRect = new Rectangle(currentFrame * frameWidth, row * frameHeight, frameWidth, frameHeight);
-            spriteBatch.Draw(texture, position, sourceRect, Color.White);
-        }
-
-        public Rectangle GetBounds()
-        {
-            return new Rectangle((int)position.X, (int)position.Y, frameWidth, frameHeight);
         }
     }
 }

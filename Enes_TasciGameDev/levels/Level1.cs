@@ -1,339 +1,326 @@
 ﻿using Enes_TasciGameDev;
 using Enes_TasciGameDev.Entities;
+using Enes_TasciGameDev.Factories;
 using Enes_TasciGameDev.Items;
+using Enes_TasciGameDev.Obs;
 using Enes_TasciGameDev.Prop;
-using Microsoft.VisualBasic.Devices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
-using System.Reflection.Metadata;
 
-public class Level1 : IGameState
+namespace Enes_TasciGameDev
 {
-    private Game1 game;
-    private Player player;  // Your Player class
-    private Texture2D playerTexture;
-    private Texture2D background;
-    private KeyboardState previousKeyboardState;
-    private List<Coin> coins;
-    private Texture2D coinTexture;
-    private Random random = new Random();
-    private Texture2D scoreBackground;
-    private SpriteFont scoreFont;
-    private Coin currentCoin;
-    private Texture2D finishTexture;
-    private Finish finish;
-    private bool levelPassed = false;
-    private Texture2D overlay;
-    private List<Goblin> goblins;
-    private Texture2D goblinTexture;
-    private bool gameOver = false;
-    private double damageCooldown = 1.0; // 1 seconde tussen hits
-    private double damageTimer = 0;
-
-    List<PowerUp> powerUps = new List<PowerUp>();
-
-
-    public Level1(Game1 game)
+    public class Level1 : IGameState
     {
-        this.game = game;
-    }
+        private Game1 game;
+        private Player player;
+        private Texture2D playerTexture;
+        private Texture2D background;
+        private KeyboardState previousKeyboardState;
+        private List<Coin> coins;
+        private Texture2D coinTexture;
+        private Random random = new Random();
+        private Texture2D scoreBackground;
+        private SpriteFont scoreFont;
+        private Coin currentCoin;
+        private Texture2D finishTexture;
+        private Finish finish;
+        private bool levelPassed = false;
+        private Texture2D overlay;
+        private List<Enemy> enemies; // Changed from List<Goblin> to List<Enemy>
+        private Texture2D goblinTexture;
+        private bool gameOver = false;
+        private double damageCooldown = 1.0; // 1 second between hits
+        private double damageTimer = 0;
+        private List<PowerUp> powerUps;
+        private List<Obstacle> obstaclesList;
+        private Texture2D obstacleTexture;
 
-    public void LoadContent()
-    {
-        //powerups
-        Texture2D healthTexture = game.Content.Load<Texture2D>("healthPowerUp");
-        Texture2D speedTexture = game.Content.Load<Texture2D>("speedPowerUp");
-        SpawnPowerUps(healthTexture, speedTexture);
-
-        //goblin enemy spawnen
-        goblinTexture = game.Content.Load<Texture2D>("goblin"); // voeg enemy.png toe aan Content
-        goblins = new List<Goblin>();
-
-        // spawn bv 3 vijanden random
-        for (int i = 0; i < 3; i++)
+        public Level1(Game1 game)
         {
-            Vector2 pos = new Vector2(
-                random.Next(0, game.GraphicsDevice.Viewport.Width - goblinTexture.Width),
-                random.Next(0, game.GraphicsDevice.Viewport.Height - goblinTexture.Height)
-            );
-            goblins.Add(new Goblin(goblinTexture, pos, speed: 1f));
+            this.game = game;
+            powerUps = new List<PowerUp>();
+            enemies = new List<Enemy>(); // Initialize enemies list
         }
-        //finish line
-        finishTexture = game.Content.Load<Texture2D>("finish"); // Voeg house.png toe aan Content
-        finish = null; // nog niet zichtbaar
 
-        // Background
-        background = game.Content.Load<Texture2D>("bgLevel1");
-        scoreFont = game.Content.Load<SpriteFont>("scoreFont"); // grote font, bv 48px
-
-        // Maak een kleine texture van 1x1 pixel en kleur hem later lichtgrijs
-        scoreBackground = new Texture2D(game.GraphicsDevice, 1, 1);
-        scoreBackground.SetData(new[] { Color.LightGray });
-        
-        //player
-        playerTexture = game.Content.Load<Texture2D>("player");
-        player = new Player(new Vector2(400, 240), playerTexture, 4, 4);
-
-        // Coins
-        coinTexture = game.Content.Load<Texture2D>("coin"); // voeg coin.png toe aan Content
-        coins = new List<Coin>();
-
-        //overlay
-        overlay = new Texture2D(game.GraphicsDevice, 1, 1);
-        overlay.SetData(new[] { Color.Black });
-
-        for (int i = 0; i < 5; i++) // spawn 5 coins random
+        public void LoadContent()
         {
-            Vector2 pos = new Vector2(
-                random.Next(0, game.GraphicsDevice.Viewport.Width - coinTexture.Width),
-                random.Next(0, game.GraphicsDevice.Viewport.Height - coinTexture.Height)
-            );
-            coins.Add(new Coin(coinTexture, pos));
-        }
-        SpawnNextCoin();
-    }
-    void SpawnPowerUps(Texture2D healthTexture, Texture2D speedTexture)
-    {
-        // scale ongeveer gelijk aan coin scale (0.1)
-        powerUps.Add(new PowerUp(new Vector2(300, 200), PowerUpType.HealthBoost, healthTexture, 0.02f));
-        powerUps.Add(new PowerUp(new Vector2(200, 300), PowerUpType.SpeedBoost, speedTexture, 0.1f));
-    }
-
-    private void SpawnNextCoin()
-    {
-        if (player.Coins < 5)
-        {
-            float scale = 0.1f;
-            int coinWidth = (int)(coinTexture.Width * scale);
-            int coinHeight = (int)(coinTexture.Height * scale);
-
-            int screenWidth = game.GraphicsDevice.Viewport.Width;
-            int screenHeight = game.GraphicsDevice.Viewport.Height;
-
-            int x = random.Next(0, screenWidth - coinWidth);
-            int y = random.Next(0, screenHeight - coinHeight);
-
-            currentCoin = new Coin(coinTexture, new Vector2(x, y), scale);
-
-            Console.WriteLine($"Spawn coin at: {x}, {y}");
-        }
-        else
-        {
-            currentCoin = null;
-        }
-    }
-
-
-
-
-
-    private void CheckForFinishSpawn()
-    {
-        if (player.Coins >= 5 && finish == null)
-        {
-            // Spawn huisje rechts-midden, iets kleiner
-            float scale = 0.5f; // halve grootte van de originele texture
-            int finishWidth = (int)(finishTexture.Width * scale);
-            int finishHeight = (int)(finishTexture.Height * scale);
-
-            Vector2 pos = new Vector2(
-                game.GraphicsDevice.Viewport.Width - finishWidth - 20, // dichter bij rechts
-                (game.GraphicsDevice.Viewport.Height - finishHeight) / 2 // precies verticaal gecentreerd
-            );
-
-            finish = new Finish(finishTexture, pos, scale); // Finish class moet scale ondersteunen
-        }
-    }
-    
-
-
-    public void Update(GameTime gameTime)
-    {
-        MouseState mouseState = Microsoft.Xna.Framework.Input.Mouse.GetState();
-
-
-        if (gameOver || levelPassed)
-        {
-            var keyboard = Microsoft.Xna.Framework.Input.Keyboard.GetState();
-
-            if (keyboard.IsKeyDown(Keys.Enter))
+            // Obstacles (tinier scales)
+            obstacleTexture = game.Content.Load<Texture2D>("obstacle"); // Simple square/block texture
+            obstaclesList = new List<Obstacle>
             {
-                // Go to Level 2 if the player passed the level
-                if (levelPassed)
-                    game.ChangeState(new Level2(game));
-                else // If game over, restart Level 1 or go to menu (you choose)
-                    game.ChangeState(new StartScreen(game));
-            }
+                new Obstacle(new Vector2(300, 300), obstacleTexture, 0.1f),
+                new Obstacle(new Vector2(500, 150), obstacleTexture, 0.15f),
+                new Obstacle(new Vector2(100, 400), obstacleTexture, 0.2f)
+            };
 
-            if (keyboard.IsKeyDown(Keys.Tab))
+            // PowerUps
+            Texture2D healthTexture = game.Content.Load<Texture2D>("healthPowerUp");
+            Texture2D speedTexture = game.Content.Load<Texture2D>("speedPowerUp");
+            SpawnPowerUps(healthTexture, speedTexture);
+
+            // Goblin enemies using EnemyFactory
+            goblinTexture = game.Content.Load<Texture2D>("goblin");
+            for (int i = 0; i < 6; i++)
             {
-                // Always go back to Main Menu
-                game.ChangeState(new StartScreen(game));
-            }
-
-            return; // Freeze game
-        }
-
-
-        player.Update(gameTime, game.GraphicsDevice);
-
-        Rectangle playerBounds = player.GetBounds();
-
-        if (currentCoin != null && playerBounds.Intersects(currentCoin.GetBounds()))
-        {
-            player.AddCoin();
-            SpawnNextCoin();
-        }
-
-
-
-        foreach (var goblin in goblins)
-        {
-            goblin.Update(gameTime, player.Position, goblins);
-
-            if (goblin.GetBounds().Intersects(player.GetBounds()))
-            {
-                // Player krijgt schade
-                damageTimer += gameTime.ElapsedGameTime.TotalSeconds;
-                if (damageTimer >= damageCooldown)
+                Vector2 pos;
+                bool validPosition;
+                do
                 {
-                    player.TakeDamage();
-                    damageTimer = 0;
-
-                    // Stun de goblin 2 sec
-                    goblin.Stun(); // Je moet stun functie toevoegen in Goblin
-
-                    if (player.isDead)
+                    pos = new Vector2(
+                        random.Next(0, game.GraphicsDevice.Viewport.Width - (goblinTexture.Width / 3)), // Use frameWidth approximation
+                        random.Next(0, game.GraphicsDevice.Viewport.Height - ((goblinTexture.Height / 4) + 1))
+                    );
+                    validPosition = true;
+                    Goblin tempGoblin = (Goblin)EnemyFactory.CreateEnemy(EnemyType.Goblin, goblinTexture, pos, speed: 1f); // Temporary goblin for bounds
+                    Rectangle goblinBounds = tempGoblin.GetBounds();
+                    foreach (var obstacle in obstaclesList)
                     {
-                        gameOver = true;
-                        Console.WriteLine("Game Over!");
+                        if (goblinBounds.Intersects(obstacle.Bounds))
+                        {
+                            validPosition = false;
+                            break;
+                        }
+                    }
+                } while (!validPosition);
+                Enemy goblin = (Enemy)EnemyFactory.CreateEnemy(EnemyType.Goblin, goblinTexture, pos, speed: 1f);
+                enemies.Add(goblin);
+            }
+
+            // Finish line
+            finishTexture = game.Content.Load<Texture2D>("finish");
+            finish = null; // Not visible yet
+
+            // Background
+            background = game.Content.Load<Texture2D>("bgLevel1");
+            scoreFont = game.Content.Load<SpriteFont>("scoreFont");
+
+            // Score background
+            scoreBackground = new Texture2D(game.GraphicsDevice, 1, 1);
+            scoreBackground.SetData(new[] { Color.LightGray });
+
+            // Player
+            playerTexture = game.Content.Load<Texture2D>("player");
+            player = new Player(new Vector2(400, 240), playerTexture, 4, 4);
+
+            // Coins
+            coinTexture = game.Content.Load<Texture2D>("coin");
+            coins = new List<Coin>();
+            for (int i = 0; i < 5; i++)
+            {
+                Vector2 pos = new Vector2(
+                    random.Next(0, game.GraphicsDevice.Viewport.Width - coinTexture.Width),
+                    random.Next(0, game.GraphicsDevice.Viewport.Height - coinTexture.Height)
+                );
+                coins.Add(new Coin(coinTexture, pos));
+            }
+            SpawnNextCoin();
+
+            // Overlay
+            overlay = new Texture2D(game.GraphicsDevice, 1, 1);
+            overlay.SetData(new[] { Color.Black });
+        }
+
+        private void SpawnPowerUps(Texture2D healthTexture, Texture2D speedTexture)
+        {
+            powerUps.Add(new PowerUp(new Vector2(300, 200), PowerUpType.HealthBoost, healthTexture, 0.02f));
+            powerUps.Add(new PowerUp(new Vector2(200, 300), PowerUpType.SpeedBoost, speedTexture, 0.1f));
+        }
+
+        private void SpawnNextCoin()
+        {
+            if (player.Coins < 5)
+            {
+                float scale = 0.1f;
+                int coinWidth = (int)(coinTexture.Width * scale);
+                int coinHeight = (int)(coinTexture.Height * scale);
+
+                int x = random.Next(0, game.GraphicsDevice.Viewport.Width - coinWidth);
+                int y = random.Next(0, game.GraphicsDevice.Viewport.Height - coinHeight);
+
+                currentCoin = new Coin(coinTexture, new Vector2(x, y), scale);
+                Console.WriteLine($"Spawn coin at: {x}, {y}");
+            }
+            else
+            {
+                currentCoin = null;
+            }
+        }
+
+        private void CheckForFinishSpawn()
+        {
+            if (player.Coins >= 5 && finish == null)
+            {
+                float scale = 0.5f;
+                int finishWidth = (int)(finishTexture.Width * scale);
+                int finishHeight = (int)(finishTexture.Height * scale);
+
+                Vector2 pos = new Vector2(
+                    game.GraphicsDevice.Viewport.Width - finishWidth - 20,
+                    (game.GraphicsDevice.Viewport.Height - finishHeight) / 2
+                );
+
+                finish = new Finish(finishTexture, pos, scale);
+            }
+        }
+
+        public void Update(GameTime gameTime)
+        {
+            if (gameOver || levelPassed)
+            {
+                var keyboard = Keyboard.GetState();
+                if (keyboard.IsKeyDown(Keys.Enter))
+                {
+                    if (levelPassed)
+                        game.ChangeState(new Level2(game));
+                    else
+                        game.ChangeState(new StartScreen(game));
+                }
+                if (keyboard.IsKeyDown(Keys.Tab))
+                {
+                    game.ChangeState(new StartScreen(game));
+                }
+                return;
+            }
+
+            player.Update(gameTime, game.GraphicsDevice, obstaclesList);
+            Rectangle playerBounds = player.GetBounds();
+
+            if (currentCoin != null && playerBounds.Intersects(currentCoin.GetBounds()))
+            {
+                player.AddCoin();
+                SpawnNextCoin();
+            }
+
+            foreach (var enemy in enemies)
+            {
+                enemy.Update(gameTime, player.Position, enemies, obstaclesList, game.GraphicsDevice.Viewport.Width, game.GraphicsDevice.Viewport.Height);
+                if (enemy.GetBounds().Intersects(player.GetBounds()))
+                {
+                    damageTimer += gameTime.ElapsedGameTime.TotalSeconds;
+                    if (damageTimer >= damageCooldown)
+                    {
+                        player.TakeDamage();
+                        damageTimer = 0;
+                        enemy.Stun();
+                        if (player.isDead)
+                        {
+                            gameOver = true;
+                            Console.WriteLine("Game Over!");
+                        }
                     }
                 }
             }
-        }
-        foreach (var powerUp in powerUps)
-        {
-            if (!powerUp.IsCollected && powerUp.GetBounds().Intersects(player.GetBounds()))
+
+            foreach (var powerUp in powerUps)
             {
-                powerUp.Apply(player);
+                if (!powerUp.IsCollected && powerUp.GetBounds().Intersects(player.GetBounds()))
+                {
+                    powerUp.Apply(player);
+                }
+            }
+
+            CheckForFinishSpawn();
+            if (finish != null && playerBounds.Intersects(finish.GetBounds()))
+            {
+                levelPassed = true;
             }
         }
 
-
-        CheckForFinishSpawn();
-
-        if (finish != null && playerBounds.Intersects(finish.GetBounds()))
+        public void Draw(SpriteBatch spriteBatch)
         {
-            levelPassed = true;
+            spriteBatch.Begin();
+
+            // Draw background
+            spriteBatch.Draw(background, new Rectangle(0, 0,
+                game.GraphicsDevice.Viewport.Width,
+                game.GraphicsDevice.Viewport.Height), Color.White);
+
+            // Draw obstacles
+            foreach (var obstacle in obstaclesList)
+            {
+                obstacle.Draw(spriteBatch);
+            }
+
+            // Draw score background and text
+            string scoreText = $"Coins: {player.Coins}";
+            Vector2 textSize = scoreFont.MeasureString(scoreText);
+            int paddingX = 20;
+            int paddingY = 10;
+            Rectangle backgroundRect = new Rectangle(
+                game.GraphicsDevice.Viewport.Width - (int)textSize.X - paddingX,
+                10,
+                (int)textSize.X + paddingX,
+                (int)textSize.Y + paddingY
+            );
+            spriteBatch.Draw(scoreBackground, backgroundRect, Color.LightGray);
+            spriteBatch.DrawString(scoreFont, scoreText,
+                new Vector2(backgroundRect.X + paddingX / 2, backgroundRect.Y + paddingY / 2),
+                Color.Black);
+
+            // Draw health
+            string healthText = $"Health: {player.Health}";
+            spriteBatch.DrawString(scoreFont, healthText, new Vector2(10, 10), Color.Red);
+
+            // Draw coin
+            if (currentCoin != null)
+            {
+                currentCoin.Draw(spriteBatch);
+            }
+
+            // Draw player
+            player.Draw(spriteBatch);
+
+            // Draw enemies
+            foreach (var enemy in enemies)
+            {
+                enemy.Draw(spriteBatch);
+            }
+
+            // Draw powerups
+            foreach (var powerUp in powerUps)
+            {
+                powerUp.Update(player);
+                powerUp.Draw(spriteBatch);
+            }
+
+            // Draw finish line
+            if (finish != null)
+            {
+                finish.Draw(spriteBatch);
+            }
+
+            // Draw level passed or game over overlay
+            if (levelPassed)
+            {
+                spriteBatch.Draw(overlay, new Rectangle(0, 0,
+                    game.GraphicsDevice.Viewport.Width,
+                    game.GraphicsDevice.Viewport.Height), Color.Black * 0.6f);
+                string message = "\nLevel Complete!\n\nPress Enter for Level 2\n\nPress Tab for Menu\n";
+                Vector2 size = scoreFont.MeasureString(message);
+                Vector2 position = new Vector2(
+                    (game.GraphicsDevice.Viewport.Width - size.X) / 2,
+                    (game.GraphicsDevice.Viewport.Height - size.Y) / 2
+                );
+                spriteBatch.DrawString(scoreFont, message, position, Color.Yellow);
+            }
+            else if (gameOver)
+            {
+                spriteBatch.Draw(overlay, new Rectangle(0, 0,
+                    game.GraphicsDevice.Viewport.Width,
+                    game.GraphicsDevice.Viewport.Height), Color.Black * 0.6f);
+                string message = "Game Over!\n\nPress Enter for Main Menu";
+                Vector2 size = scoreFont.MeasureString(message);
+                Vector2 position = new Vector2(
+                    (game.GraphicsDevice.Viewport.Width - size.X) / 2,
+                    (game.GraphicsDevice.Viewport.Height - size.Y) / 2
+                );
+                spriteBatch.DrawString(scoreFont, message, position, Color.Red);
+            }
+
+            spriteBatch.End();
         }
     }
-
-
-
-
-    public void Draw(SpriteBatch spriteBatch)
-    {
-        spriteBatch.Begin();
-
-        // Teken de achtergrond
-        spriteBatch.Draw(background, new Rectangle(0, 0,
-            game.GraphicsDevice.Viewport.Width,
-            game.GraphicsDevice.Viewport.Height), Color.White);
-
-        // Score tekst en achtergrond (rechtsboven)
-        string scoreText = $"Coins: {player.Coins}";
-        Vector2 textSize = scoreFont.MeasureString(scoreText);
-
-        // Achtergrond rechthoek met padding
-        int paddingX = 20;
-        int paddingY = 10;
-        Rectangle backgroundRect = new Rectangle(
-            game.GraphicsDevice.Viewport.Width - (int)textSize.X - paddingX,
-            10,
-            (int)textSize.X + paddingX,
-            (int)textSize.Y + paddingY
-        );
-
-        // Lichtgrijze achtergrond
-        spriteBatch.Draw(scoreBackground, backgroundRect, Color.LightGray);
-
-        // Score tekst
-        spriteBatch.DrawString(scoreFont, scoreText,
-            new Vector2(backgroundRect.X + paddingX / 2, backgroundRect.Y + paddingY / 2),
-            Color.Black);
-
-        // Teken de coins en hp
-        if (currentCoin != null)
-        {
-            currentCoin.Draw(spriteBatch);
-        }
-        string healthText = $"Health: {player.Health}";
-        spriteBatch.DrawString(scoreFont, healthText, new Vector2(10, 10), Color.Red);
-
-        // Teken de speler
-        player.Draw(spriteBatch);
-
-        //teken enemies
-        foreach (var enemy in goblins)
-        {
-            enemy.Draw(spriteBatch);
-        }
-
-        //teken powerups
-        foreach (var powerUp in powerUps)
-        {
-            powerUp.Update(player); // check collision
-            powerUp.Draw(spriteBatch);
-        }
-
-
-        //teken finish line
-        if (finish != null)
-        {
-            finish.Draw(spriteBatch);
-        }
-
-        // Level passed melding
-        if (levelPassed)
-        {
-            // Teken semi-transparante overlay
-            spriteBatch.Draw(overlay, new Rectangle(0, 0,
-                game.GraphicsDevice.Viewport.Width,
-                game.GraphicsDevice.Viewport.Height), Color.Black * 0.6f);
-
-            string message = "\nLevel Complete!\n\nPress Enter for Level 2\n\nPress Tab for Menu\n";
-            Vector2 size = scoreFont.MeasureString(message);
-            Vector2 position = new Vector2(
-                (game.GraphicsDevice.Viewport.Width - size.X) / 2,
-                (game.GraphicsDevice.Viewport.Height - size.Y) / 2
-            );
-
-            spriteBatch.DrawString(scoreFont, message, position, Color.Yellow);
-        }
-        //gameover scherm
-        if (gameOver)
-        {
-            // semi-transparante overlay
-            spriteBatch.Draw(overlay, new Rectangle(0, 0,
-                game.GraphicsDevice.Viewport.Width,
-                game.GraphicsDevice.Viewport.Height), Color.Black * 0.6f);
-
-            string message = "Game Over!\n\nPress Enter for Main Menu";
-            Vector2 size = scoreFont.MeasureString(message);
-            Vector2 position = new Vector2(
-                (game.GraphicsDevice.Viewport.Width - size.X) / 2,
-                (game.GraphicsDevice.Viewport.Height - size.Y) / 2
-            );
-
-            spriteBatch.DrawString(scoreFont, message, position, Color.Red);
-        }
-
-
-
-        spriteBatch.End();
-    }
-
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
 
 namespace Enes_TasciGameDev
 {
@@ -27,6 +28,10 @@ namespace Enes_TasciGameDev
 
         public void ChangeState(IGameState newState)
         {
+            if (currentState is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
             currentState = newState;
             currentState.LoadContent();
         }

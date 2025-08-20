@@ -1,13 +1,13 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Enes_TasciGameDev.Obs;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 
 namespace Enes_TasciGameDev.Entities
 {
-    public class Skeleton
+    public class Skeleton : Enemy
     {
         private Texture2D texture;
-        public Vector2 Position { get; private set; }
         private float speed;
         private bool stunned = false;
         private double stunTimer = 0;
@@ -43,7 +43,12 @@ namespace Enes_TasciGameDev.Entities
             frameHeight = (texture.Height / rows) + 1;
         }
 
-        public void Update(GameTime gameTime, List<Skeleton> allSkeletons)
+        public override Rectangle GetBounds()
+        {
+            return new Rectangle((int)Position.X, (int)Position.Y, frameWidth, frameHeight);
+        }
+
+        public override void Update(GameTime gameTime, Vector2 playerPosition, List<Enemy> enemies, List<Obstacle> obstacles, int screenWidth, int screenHeight)
         {
             if (stunned)
             {
@@ -74,10 +79,15 @@ namespace Enes_TasciGameDev.Entities
             else
             {
                 direction.Normalize();
-                Position += direction * speed;
+                Vector2 newPosition = Position + direction * speed;
 
-                // Avoid other skeletons
-                foreach (var other in allSkeletons)
+                // Clamp position to stay within screen boundaries
+                newPosition.X = MathHelper.Clamp(newPosition.X, 0, screenWidth - frameWidth);
+                newPosition.Y = MathHelper.Clamp(newPosition.Y, 0, screenHeight - frameHeight);
+                Position = newPosition;
+
+                // Avoid other enemies
+                foreach (var other in enemies)
                 {
                     if (other == this) continue;
                     Vector2 diff = Position - other.Position;
@@ -88,6 +98,12 @@ namespace Enes_TasciGameDev.Entities
                         Position += diff * (separationDistance - diffLength) * 0.5f;
                     }
                 }
+
+                // Re-clamp after separation to ensure staying on screen
+                Position = new Vector2(
+                    MathHelper.Clamp(Position.X, 0, screenWidth - frameWidth),
+                    MathHelper.Clamp(Position.Y, 0, screenHeight - frameHeight)
+                );
             }
 
             // Animation update
@@ -106,21 +122,16 @@ namespace Enes_TasciGameDev.Entities
             else if (direction.Y < 0) row = 0; // up
         }
 
-        public void Stun()
-        {
-            stunned = true;
-            stunTimer = 0;
-        }
-
-        public void Draw(SpriteBatch spriteBatch)
+        public override void Draw(SpriteBatch spriteBatch)
         {
             Rectangle sourceRect = new Rectangle(currentFrame * frameWidth, row * frameHeight, frameWidth, frameHeight);
             spriteBatch.Draw(texture, Position, sourceRect, stunned ? Color.LightGray : Color.White);
         }
 
-        public Rectangle GetBounds()
+        public override void Stun()
         {
-            return new Rectangle((int)Position.X, (int)Position.Y, frameWidth, frameHeight);
+            stunned = true;
+            stunTimer = 0;
         }
     }
 }
