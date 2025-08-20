@@ -37,6 +37,9 @@ namespace Enes_TasciGameDev
         private List<PowerUp> powerUps;
         private List<Obstacle> obstaclesList;
         private Texture2D obstacleTexture;
+        private Dog dog;
+        private Texture2D dogTexture;
+
 
         public Level1(Game1 game)
         {
@@ -47,6 +50,10 @@ namespace Enes_TasciGameDev
 
         public void LoadContent()
         {
+            //create dog
+            dogTexture = game.Content.Load<Texture2D>("dog");
+            dog = new Dog(new Vector2(200, 200), dogTexture, rows: 2, columns: 3);
+
             // Obstacles (tinier scales)
             obstacleTexture = game.Content.Load<Texture2D>("obstacle"); // Simple square/block texture
             obstaclesList = new List<Obstacle>
@@ -168,6 +175,8 @@ namespace Enes_TasciGameDev
 
         public void Update(GameTime gameTime)
         {
+            dog.Update(gameTime, game.GraphicsDevice, obstaclesList);
+
             if (gameOver || levelPassed)
             {
                 var keyboard = Keyboard.GetState();
@@ -285,6 +294,8 @@ namespace Enes_TasciGameDev
                 powerUp.Update(player);
                 powerUp.Draw(spriteBatch);
             }
+            //draw dog
+            dog.Draw(spriteBatch);
 
             // Draw finish line
             if (finish != null)

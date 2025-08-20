@@ -14,12 +14,18 @@ public class MovementComponent
     private float friction = 0.9f;
     private int frameWidth, frameHeight;
     public int Row { get; private set; }
+    public enum Direction { Left, Right }
+    public Direction LastDirection { get; private set; } = Direction.Right;
 
-    public MovementComponent(int frameWidth, int frameHeight)
+
+    private bool useArrowKeys;
+
+    public MovementComponent(int frameWidth, int frameHeight, bool useArrowKeys = false)
     {
         this.frameWidth = frameWidth;
         this.frameHeight = frameHeight;
         this.Row = 0;
+        this.useArrowKeys = useArrowKeys;
     }
 
     public Vector2 Update(GameTime gameTime, Vector2 currentPosition, GraphicsDevice graphicsDevice, List<Obstacle> obstacles)
@@ -27,46 +33,49 @@ public class MovementComponent
         Vector2 movement = Vector2.Zero;
         KeyboardState keyboardState = Keyboard.GetState();
 
-        if (keyboardState.IsKeyDown(Keys.Z)) movement.Y -= 1;
-        if (keyboardState.IsKeyDown(Keys.S)) movement.Y += 1;
-        if (keyboardState.IsKeyDown(Keys.Q)) movement.X -= 1;
-        if (keyboardState.IsKeyDown(Keys.D)) movement.X += 1;
+        if (useArrowKeys)
+        {
+            if (keyboardState.IsKeyDown(Keys.Up)) movement.Y -= 1;
+            if (keyboardState.IsKeyDown(Keys.Down)) movement.Y += 1;
+            if (keyboardState.IsKeyDown(Keys.Left)) movement.X -= 1;
+            if (keyboardState.IsKeyDown(Keys.Right)) movement.X += 1;
+        }
+        else
+        {
+            if (keyboardState.IsKeyDown(Keys.Z)) movement.Y -= 1;
+            if (keyboardState.IsKeyDown(Keys.S)) movement.Y += 1;
+            if (keyboardState.IsKeyDown(Keys.Q)) movement.X -= 1;
+            if (keyboardState.IsKeyDown(Keys.D)) movement.X += 1;
+        }
 
-        // Apply acceleration
+        // normale movement logica
         if (movement != Vector2.Zero)
         {
             movement.Normalize();
-            Vector2 targetVelocity = movement * MaxSpeed;
-            Velocity = Vector2.Lerp(Velocity, targetVelocity, 0.04f);
+            Velocity = movement * MaxSpeed;
         }
         else
         {
             Velocity *= friction;
         }
+        if (movement.X < 0) LastDirection = Direction.Left;
+        else if (movement.X > 0) LastDirection = Direction.Right;
 
-        // Limit speed
-        if (Velocity.Length() > MaxSpeed)
-        {
-            Velocity.Normalize();
-            Velocity *= MaxSpeed;
-        }
 
-        // Calculate proposed new position
         Vector2 newPosition = currentPosition + Velocity;
 
-        // Check for collisions
+        // Collision check
         if (obstacles != null)
         {
-            Rectangle newPlayerBounds = new Rectangle(
-                (int)newPosition.X + 8,
-                (int)newPosition.Y + 8,
-                frameWidth - 16,
-                frameHeight - 16
+            Rectangle newBounds = new Rectangle(
+                (int)newPosition.X,
+                (int)newPosition.Y,
+                frameWidth,
+                frameHeight
             );
-
             foreach (var obstacle in obstacles)
             {
-                if (newPlayerBounds.Intersects(obstacle.Bounds))
+                if (newBounds.Intersects(obstacle.Bounds))
                 {
                     newPosition = currentPosition;
                     Velocity = Vector2.Zero;
@@ -75,7 +84,7 @@ public class MovementComponent
             }
         }
 
-        // Clamp position to screen bounds
+        // Clamp binnen scherm
         newPosition.X = MathHelper.Clamp(newPosition.X, 0, graphicsDevice.Viewport.Width - frameWidth);
         newPosition.Y = MathHelper.Clamp(newPosition.Y, 0, graphicsDevice.Viewport.Height - frameHeight);
 
