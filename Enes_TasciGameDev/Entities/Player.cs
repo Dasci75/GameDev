@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
 using System.Data;
 
 public class Player
@@ -18,12 +19,18 @@ public class Player
     private float speedBoostTimer = 0f;
     private float originalSpeed;
 
+    private Vector2 velocity;         // huidige snelheid
+    private float acceleration = 0.5f; // hoe snel speler versnelt
+    private float friction = 0.9f;     // weerstand (hoe snel hij vertraagt)
+    public float MaxSpeed { get; private set; } = 3f; // maximale snelheid
+
+
 
     public int Health { get; set; } = 5;
     public int Coins { get; set; } = 0;
 
     public bool isDead = false;
-    private int deathRow = 4; // row in sprite sheet for death animation
+    private int deathRow = 4; // row in sprite sheet for d)eath animation
     private int deathFramesCount = 4; // number of frames in death animation
 
     public Player(Vector2 position, Texture2D texture, int rows, int columns)
@@ -51,8 +58,8 @@ public class Player
     }
     public void ApplySpeedBoost(float multiplier, float duration)
     {
-        originalSpeed = Speed;
-        Speed *= multiplier;
+        originalSpeed = MaxSpeed;
+        MaxSpeed *= multiplier;
         speedBoostTimer = duration;
     }
 
@@ -89,7 +96,6 @@ public class Player
             }
             return; // skip movement updates
         }
-
         Vector2 movement = Vector2.Zero;
         KeyboardState keyboardState = Keyboard.GetState();
 
@@ -98,20 +104,44 @@ public class Player
         if (keyboardState.IsKeyDown(Keys.Q)) movement.X -= 1;
         if (keyboardState.IsKeyDown(Keys.D)) movement.X += 1;
 
+        // Versnelling toepassen
         if (movement != Vector2.Zero)
         {
-            position += movement * Speed;
+            movement.Normalize(); // zodat diagonaal niet sneller is
+            Vector2 targetVelocity = movement * MaxSpeed;
 
-            position.X = MathHelper.Clamp(position.X, 0, graphicsDevice.Viewport.Width - frameWidth);
-            position.Y = MathHelper.Clamp(position.Y, 0, graphicsDevice.Viewport.Height - frameHeight);
+            velocity = Vector2.Lerp(velocity, targetVelocity, 0.04f);
 
-            SetAnimationRow(movement);
+        }
+        else
+        {
+            // Geen input → wrijving toepassen
+            velocity *= friction;
+        }
+
+        // Snelheid limiteren
+        if (velocity.Length() > MaxSpeed)
+        {
+            velocity.Normalize();
+            velocity *= MaxSpeed;
+        }
+
+        // Positie updaten
+        position += velocity;
+
+        // Grenzen scherm
+        position.X = MathHelper.Clamp(position.X, 0, graphicsDevice.Viewport.Width - frameWidth);
+        position.Y = MathHelper.Clamp(position.Y, 0, graphicsDevice.Viewport.Height - frameHeight);
+
+        // Animatie alleen bij beweging
+        if (velocity.LengthSquared() > 0.1f)
+        {
+            SetAnimationRow(velocity);
 
             timer += gameTime.ElapsedGameTime.TotalMilliseconds;
             if (timer > interval)
             {
-                currentFrame++;
-                if (currentFrame >= columns) currentFrame = 0;
+                currentFrame = (currentFrame + 1) % columns;
                 timer = 0;
             }
         }
@@ -120,11 +150,12 @@ public class Player
             currentFrame = 0; // idle
         }
 
+
         if (speedBoostTimer > 0)
         {
             speedBoostTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
             if (speedBoostTimer <= 0)
-                Speed = originalSpeed;
+                MaxSpeed = originalSpeed;
         }
     }
     public Vector2 Position
@@ -144,11 +175,18 @@ public class Player
 
     private void SetAnimationRow(Vector2 movement)
     {
-        if (movement.Y < 0) row = 3; // up
-        else if (movement.Y > 0) row = 0; // down
-        else if (movement.X < 0) row = 1; // left
-        else if (movement.X > 0) row = 2; // right
+        if (Math.Abs(movement.X) > Math.Abs(movement.Y))
+        {
+            if (movement.X < 0) row = 1; // left
+            else if (movement.X > 0) row = 2; // right
+        }
+        else
+        {
+            if (movement.Y < 0) row = 3; // up
+            else if (movement.Y > 0) row = 0; // down
+        }
     }
+
 
     public void Draw(SpriteBatch spriteBatch)
     {
