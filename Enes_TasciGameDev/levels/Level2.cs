@@ -16,7 +16,6 @@ public class Level2 : IGameState
     private List<Coin> coins;
     private Texture2D coinTexture;
     private Random random = new Random();
-    private int score = 0;
     private Texture2D scoreBackground;
     private SpriteFont scoreFont;
     private Coin currentCoin;
@@ -92,7 +91,7 @@ public class Level2 : IGameState
 
     private void SpawnNextCoin()
     {
-        if (score < 7)
+        if (player.Coins < 7)
         {
             float scale = 0.1f;
             int coinWidth = (int)(coinTexture.Width * scale);
@@ -114,7 +113,7 @@ public class Level2 : IGameState
 
     private void CheckForFinishSpawn()
     {
-        if (score >= 7 && finish == null)
+        if (player.Coins >= 7 && finish == null)
         {
             float scale = 0.5f;
             int finishWidth = (int)(finishTexture.Width * scale);
@@ -157,9 +156,21 @@ public class Level2 : IGameState
 
         if (currentCoin != null && playerBounds.Intersects(currentCoin.GetBounds()))
         {
-            score++;
+            player.AddCoin();
             SpawnNextCoin();
         }
+
+        foreach (var thief in thieves)
+        {
+            thief.Update(gameTime, player, game.GraphicsDevice.Viewport.Width, game.GraphicsDevice.Viewport.Height);
+
+            if (thief.GetBounds().Intersects(player.GetBounds()))
+            {
+                player.RemoveCoin();
+            }
+        }
+
+
 
         foreach (var skeleton in skeletons)
         {
@@ -199,7 +210,7 @@ public class Level2 : IGameState
             game.GraphicsDevice.Viewport.Width,
             game.GraphicsDevice.Viewport.Height), Color.White);
 
-        string scoreText = $"Coins: {score}";
+        string scoreText = $"Coins: {player.Coins}";
         Vector2 textSize = scoreFont.MeasureString(scoreText);
 
         Rectangle backgroundRect = new Rectangle(

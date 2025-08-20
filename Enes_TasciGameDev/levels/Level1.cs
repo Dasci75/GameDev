@@ -19,7 +19,6 @@ public class Level1 : IGameState
     private List<Coin> coins;
     private Texture2D coinTexture;
     private Random random = new Random();
-    private int score = 0;
     private Texture2D scoreBackground;
     private SpriteFont scoreFont;
     private Coin currentCoin;
@@ -94,7 +93,7 @@ public class Level1 : IGameState
     }
     private void SpawnNextCoin()
     {
-        if (score < 5)
+        if (player.Coins < 5)
         {
             float scale = 0.1f; //zelfde als in Coin
             int coinWidth = (int)(coinTexture.Width * scale);
@@ -122,7 +121,7 @@ public class Level1 : IGameState
 
     private void CheckForFinishSpawn()
     {
-        if (score >= 5 && finish == null)
+        if (player.Coins >= 5 && finish == null)
         {
             // Spawn huisje rechts-midden, iets kleiner
             float scale = 0.5f; // halve grootte van de originele texture
@@ -174,9 +173,11 @@ public class Level1 : IGameState
 
         if (currentCoin != null && playerBounds.Intersects(currentCoin.GetBounds()))
         {
-            score++;
+            player.AddCoin();
             SpawnNextCoin();
         }
+
+
 
         foreach (var goblin in goblins)
         {
@@ -224,7 +225,7 @@ public class Level1 : IGameState
             game.GraphicsDevice.Viewport.Height), Color.White);
 
         // Score tekst en achtergrond (rechtsboven)
-        string scoreText = $"Coins: {score}";
+        string scoreText = $"Coins: {player.Coins}";
         Vector2 textSize = scoreFont.MeasureString(scoreText);
 
         // Achtergrond rechthoek met padding

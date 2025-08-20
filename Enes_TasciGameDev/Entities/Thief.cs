@@ -23,6 +23,10 @@ namespace Enes_TasciGameDev.Entities
         private double changeDirInterval;
         private static Random rnd = new Random();
 
+        private double stealCooldown = 1.0;
+        private double stealTimer = 0;
+
+
         public Thief(Texture2D texture, Vector2 position, float speed)
         {
             this.texture = texture;
@@ -30,7 +34,7 @@ namespace Enes_TasciGameDev.Entities
             this.speed = speed;
 
             frameWidth = texture.Width / columns;
-            frameHeight = texture.Height / rows;
+            frameHeight = (texture.Height / rows) + 1;
 
             ChooseRandomDirection();
             changeDirInterval = rnd.NextDouble() * 2 + 1; // 1–3 seconden
@@ -56,15 +60,30 @@ namespace Enes_TasciGameDev.Entities
             // Beweging
             Position += direction * speed;
 
-            // Binnen scherm houden
-            Position.X = MathHelper.Clamp(Position.X, 0, screenWidth - frameWidth);
-            Position.Y = MathHelper.Clamp(Position.Y, 0, screenHeight - frameHeight);
+            // Botsing met randen
+            if (Position.X <= 0 || Position.X >= screenWidth - frameWidth)
+            {
+                direction.X *= -1; // keer horizontale richting om
+                Position.X = MathHelper.Clamp(Position.X, 0, screenWidth - frameWidth);
+            }
+
+            if (Position.Y <= 0 || Position.Y >= screenHeight - frameHeight)
+            {
+                direction.Y *= -1; // keer verticale richting om
+                Position.Y = MathHelper.Clamp(Position.Y, 0, screenHeight - frameHeight);
+            }
+
 
             // Animatie row
             if (Math.Abs(direction.X) > Math.Abs(direction.Y))
-                row = direction.X > 0 ? 2 : 1;
+            {
+                row = direction.X > 0 ? 1 : 3; // rechts : links
+            }
             else
-                row = direction.Y > 0 ? 0 : 3;
+            {
+                row = direction.Y > 0 ? 2 : 0; // omlaag : omhoog
+            }
+
 
             // Alleen animatie updaten als thief beweegt
             if (direction != Vector2.Zero)
@@ -82,10 +101,15 @@ namespace Enes_TasciGameDev.Entities
             }
 
             // Coin stelen
-            if (GetBounds().Intersects(player.GetBounds()) && player.Coins > 0)
+            stealTimer += gameTime.ElapsedGameTime.TotalSeconds;
+
+            // Coin stelen
+            if (GetBounds().Intersects(player.GetBounds()) && player.Coins > 0 && stealTimer >= stealCooldown)
             {
                 player.Coins--;
+                stealTimer = 0;
             }
+
         }
 
         public void Draw(SpriteBatch spriteBatch)

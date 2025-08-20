@@ -39,8 +39,21 @@ public class Player
         {
             Health--;
             if (Health <= 0)
-                Die();
+            {
+                isDead = true;
+            }
         }
+    }
+
+    public void AddCoin()
+    {
+        Coins++;
+    }
+
+    public void RemoveCoin()
+    {
+        if (Coins > 0)
+            Coins--;
     }
 
     private void Die()
