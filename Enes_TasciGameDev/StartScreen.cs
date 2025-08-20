@@ -53,7 +53,7 @@ public class StartScreen : IGameState
         game.GraphicsDevice.Clear(Color.LightBlue);
 
         // Draw the centered title
-        string titleText = "My Awesome Game";
+        string titleText = "The Coin Game";
         Vector2 titleSize = titleFont.MeasureString(titleText);
         spriteBatch.DrawString(titleFont, titleText,
             new Vector2((game.GraphicsDevice.Viewport.Width - titleSize.X) / 2, 100),

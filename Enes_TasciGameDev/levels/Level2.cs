@@ -1,5 +1,6 @@
 ﻿using Enes_TasciGameDev;
 using Enes_TasciGameDev.Entities;
+using Enes_TasciGameDev.Items;
 using Enes_TasciGameDev.Prop;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;

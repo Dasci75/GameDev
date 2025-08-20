@@ -14,7 +14,12 @@ public class Player
     private double interval = 100; // milliseconds per frame
     private int frameWidth, frameHeight;
 
-    public int Health { get; private set; } = 5;
+    public float Speed { get; set; } = 2f;
+    private float speedBoostTimer = 0f;
+    private float originalSpeed;
+
+
+    public int Health { get; set; } = 5;
     public int Coins { get; set; } = 0;
 
     public bool isDead = false;
@@ -43,6 +48,12 @@ public class Player
                 isDead = true;
             }
         }
+    }
+    public void ApplySpeedBoost(float multiplier, float duration)
+    {
+        originalSpeed = Speed;
+        Speed *= multiplier;
+        speedBoostTimer = duration;
     }
 
     public void AddCoin()
@@ -89,7 +100,7 @@ public class Player
 
         if (movement != Vector2.Zero)
         {
-            position += movement * 2f;
+            position += movement * Speed;
 
             position.X = MathHelper.Clamp(position.X, 0, graphicsDevice.Viewport.Width - frameWidth);
             position.Y = MathHelper.Clamp(position.Y, 0, graphicsDevice.Viewport.Height - frameHeight);
@@ -107,6 +118,13 @@ public class Player
         else
         {
             currentFrame = 0; // idle
+        }
+
+        if (speedBoostTimer > 0)
+        {
+            speedBoostTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+            if (speedBoostTimer <= 0)
+                Speed = originalSpeed;
         }
     }
     public Vector2 Position

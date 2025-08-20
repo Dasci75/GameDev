@@ -1,5 +1,6 @@
 ﻿using Enes_TasciGameDev;
 using Enes_TasciGameDev.Entities;
+using Enes_TasciGameDev.Items;
 using Enes_TasciGameDev.Prop;
 using Microsoft.VisualBasic.Devices;
 using Microsoft.Xna.Framework;
@@ -32,9 +33,7 @@ public class Level1 : IGameState
     private double damageCooldown = 1.0; // 1 seconde tussen hits
     private double damageTimer = 0;
 
-
-
-
+    List<PowerUp> powerUps = new List<PowerUp>();
 
 
     public Level1(Game1 game)
@@ -44,6 +43,11 @@ public class Level1 : IGameState
 
     public void LoadContent()
     {
+        //powerups
+        Texture2D healthTexture = game.Content.Load<Texture2D>("healthPowerUp");
+        Texture2D speedTexture = game.Content.Load<Texture2D>("speedPowerUp");
+        SpawnPowerUps(healthTexture, speedTexture);
+
         //goblin enemy spawnen
         goblinTexture = game.Content.Load<Texture2D>("goblin"); // voeg enemy.png toe aan Content
         goblins = new List<Goblin>();
@@ -91,11 +95,18 @@ public class Level1 : IGameState
         }
         SpawnNextCoin();
     }
+    void SpawnPowerUps(Texture2D healthTexture, Texture2D speedTexture)
+    {
+        // scale ongeveer gelijk aan coin scale (0.1)
+        powerUps.Add(new PowerUp(new Vector2(300, 200), PowerUpType.HealthBoost, healthTexture, 0.02f));
+        powerUps.Add(new PowerUp(new Vector2(200, 300), PowerUpType.SpeedBoost, speedTexture, 0.1f));
+    }
+
     private void SpawnNextCoin()
     {
         if (player.Coins < 5)
         {
-            float scale = 0.1f; //zelfde als in Coin
+            float scale = 0.1f;
             int coinWidth = (int)(coinTexture.Width * scale);
             int coinHeight = (int)(coinTexture.Height * scale);
 
@@ -203,6 +214,14 @@ public class Level1 : IGameState
                 }
             }
         }
+        foreach (var powerUp in powerUps)
+        {
+            if (!powerUp.IsCollected && powerUp.GetBounds().Intersects(player.GetBounds()))
+            {
+                powerUp.Apply(player);
+            }
+        }
+
 
         CheckForFinishSpawn();
 
@@ -262,6 +281,14 @@ public class Level1 : IGameState
         {
             enemy.Draw(spriteBatch);
         }
+
+        //teken powerups
+        foreach (var powerUp in powerUps)
+        {
+            powerUp.Update(player); // check collision
+            powerUp.Draw(spriteBatch);
+        }
+
 
         //teken finish line
         if (finish != null)
