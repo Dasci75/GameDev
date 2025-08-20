@@ -7,32 +7,43 @@ namespace Enes_TasciGameDev.Entities
     public class Skeleton
     {
         private Texture2D texture;
-        private Vector2 position;
+        public Vector2 Position { get; private set; }
         private float speed;
         private bool stunned = false;
         private double stunTimer = 0;
         private double stunDuration = 1.0;
 
-        private int rows = 4;    // 4 directions: up, right, down, left
-        private int columns = 3; // 4 frames per direction
+        // Animation
+        private int rows = 4;
+        private int columns = 3;
         private int currentFrame = 0;
         private int row = 0;
         private double timer = 0;
-        private double interval = 200;
+        private double interval = 200; // milliseconds
         private int frameWidth;
         private int frameHeight;
 
-        public Skeleton(Texture2D texture, Vector2 position, float speed)
+        // Patrol
+        private List<Vector2> patrolPoints;
+        private int currentTarget = 0;
+        private double waitTimer = 0;
+        private double waitDuration = 0.5;
+
+        // Avoid overlapping
+        private float separationDistance = 20f;
+
+        public Skeleton(Texture2D texture, Vector2 position, float speed, List<Vector2> patrolPoints)
         {
             this.texture = texture;
-            this.position = position;
+            this.Position = position;
             this.speed = speed;
+            this.patrolPoints = patrolPoints;
 
-            frameWidth = texture.Width / columns;   // 144 / 4 = 36
-            frameHeight = texture.Height / rows + 1;    // 256 / 4 = 64
+            frameWidth = texture.Width / columns;
+            frameHeight = (texture.Height / rows) + 1;
         }
 
-        public void Update(GameTime gameTime, Vector2 playerPosition, List<Skeleton> allSkeletons)
+        public void Update(GameTime gameTime, List<Skeleton> allSkeletons)
         {
             if (stunned)
             {
@@ -45,27 +56,41 @@ namespace Enes_TasciGameDev.Entities
                 return;
             }
 
-            Vector2 direction = playerPosition - position;
-            if (direction != Vector2.Zero)
+            if (patrolPoints.Count == 0) return;
+
+            Vector2 target = patrolPoints[currentTarget];
+            Vector2 direction = target - Position;
+            float distance = direction.Length();
+
+            if (distance < 1f)
+            {
+                waitTimer += gameTime.ElapsedGameTime.TotalSeconds;
+                if (waitTimer >= waitDuration)
+                {
+                    currentTarget = (currentTarget + 1) % patrolPoints.Count;
+                    waitTimer = 0;
+                }
+            }
+            else
             {
                 direction.Normalize();
-                position += direction * speed;
-            }
+                Position += direction * speed;
 
-            foreach (var other in allSkeletons)
-            {
-                if (other == this) continue;
-
-                Vector2 diff = position - other.position;
-                float distance = diff.Length();
-
-                if (distance < frameWidth)
+                // Avoid other skeletons
+                foreach (var other in allSkeletons)
                 {
-                    diff.Normalize();
-                    position += diff * (frameWidth - distance) * 0.5f;
+                    if (other == this) continue;
+                    Vector2 diff = Position - other.Position;
+                    float diffLength = diff.Length();
+                    if (diffLength < separationDistance && diffLength > 0)
+                    {
+                        diff.Normalize();
+                        Position += diff * (separationDistance - diffLength) * 0.5f;
+                    }
                 }
             }
 
+            // Animation update
             timer += gameTime.ElapsedGameTime.TotalMilliseconds;
             if (timer > interval)
             {
@@ -74,11 +99,11 @@ namespace Enes_TasciGameDev.Entities
                 timer = 0;
             }
 
-            // Determine row based on movement
-            if (direction.X > 0) row = 1;       // right
-            else if (direction.X < 0) row = 3;  // left
-            else if (direction.Y > 0) row = 2;  // down
-            else if (direction.Y < 0) row = 0;  // up
+            // Animation row based on movement direction
+            if (direction.X > 0) row = 1;      // right
+            else if (direction.X < 0) row = 3; // left
+            else if (direction.Y > 0) row = 2; // down
+            else if (direction.Y < 0) row = 0; // up
         }
 
         public void Stun()
@@ -90,12 +115,12 @@ namespace Enes_TasciGameDev.Entities
         public void Draw(SpriteBatch spriteBatch)
         {
             Rectangle sourceRect = new Rectangle(currentFrame * frameWidth, row * frameHeight, frameWidth, frameHeight);
-            spriteBatch.Draw(texture, position, sourceRect, stunned ? Color.LightGray : Color.White);
+            spriteBatch.Draw(texture, Position, sourceRect, stunned ? Color.LightGray : Color.White);
         }
 
         public Rectangle GetBounds()
         {
-            return new Rectangle((int)position.X, (int)position.Y, frameWidth, frameHeight);
+            return new Rectangle((int)Position.X, (int)Position.Y, frameWidth, frameHeight);
         }
     }
 }
