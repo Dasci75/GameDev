@@ -6,7 +6,7 @@ namespace Enes_TasciGameDev.Items
     {
         public Vector2 Position { get; private set; }
         public Texture2D texture { get; private set; }
-        public bool IsCollected { get; private set; } = false;
+        public bool IsCollected { get; set; } = false;
         public PowerUpType Type { get; private set; }
 
         private int width, height;

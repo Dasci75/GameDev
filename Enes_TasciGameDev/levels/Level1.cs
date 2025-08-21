@@ -1,6 +1,7 @@
 ﻿using Enes_TasciGameDev;
 using Enes_TasciGameDev.Entities;
 using Enes_TasciGameDev.Factory;
+using Enes_TasciGameDev.Interfaces;
 using Enes_TasciGameDev.Items;
 using Enes_TasciGameDev.Prop;
 using Microsoft.Xna.Framework;
@@ -226,10 +227,10 @@ namespace Enes_TasciGameDev
             {
                 if (!powerUp.IsCollected && powerUp.GetBounds().Intersects(player.GetBounds()))
                 {
-                    powerUp.Apply(player);
+                    ICommand command = new PowerUpCommand(player, powerUp);
+                    command.Execute();
                 }
             }
-
             CheckForFinishSpawn();
             if (finish != null && playerBounds.Intersects(finish.GetBounds()))
             {

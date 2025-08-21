@@ -151,8 +151,14 @@ namespace Enes_TasciGameDev
                 random.Next(0, game.GraphicsDevice.Viewport.Height - 50)
             );
 
-            powerUps.Add(new PowerUp(pos, type, texture, scale));
+            PowerUp newPowerUp = new PowerUp(pos, type, texture, scale);
+
+            PowerUpCommand command = new PowerUpCommand(player, newPowerUp);
+
+            powerUps.Add(newPowerUp);
+
         }
+
 
         public void Update(GameTime gameTime)
         {
@@ -224,7 +230,14 @@ namespace Enes_TasciGameDev
 
             // PowerUps
             foreach (var powerUp in powerUps)
-                powerUp.Update(player);
+            {
+                if (!powerUp.IsCollected && powerUp.GetBounds().Intersects(player.GetBounds()))
+                {
+                    // Maak command aan en voer uit
+                    PowerUpCommand command = new PowerUpCommand(player, powerUp);
+                    command.Execute();
+                }
+            }
 
             // Finish line
             if (finish != null && playerBounds.Intersects(finish.GetBounds()))
