@@ -36,8 +36,7 @@ namespace Enes_TasciGameDev.Manager
             if (!gameOver && !levelPassed) return;
 
             spriteBatch.Draw(overlay, new Rectangle(0, 0, graphics.Viewport.Width, graphics.Viewport.Height), Color.Black * 0.6f);
-            string message = levelPassed ? "Level Complete!" : "Game Over!";
-            Vector2 size = font.MeasureString(message);
+            string message = levelPassed ? "Level Complete!\n\nPress Enter for Next Level\n\nPress Tab for Main Menu" : "Game Over!\n\nPress Enter for Main Menu"; Vector2 size = font.MeasureString(message);
             Vector2 position = new Vector2((graphics.Viewport.Width - size.X) / 2, (graphics.Viewport.Height - size.Y) / 2);
             spriteBatch.DrawString(font, message, position, levelPassed ? Color.Yellow : Color.Red);
         }

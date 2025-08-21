@@ -1,6 +1,7 @@
 ﻿using Enes_TasciGameDev;
 using Enes_TasciGameDev.Entities;
 using Enes_TasciGameDev.Factory;
+using Enes_TasciGameDev.Initializer;
 using Enes_TasciGameDev.Items;
 using Enes_TasciGameDev.Manager;
 using Enes_TasciGameDev.Prop;
@@ -16,12 +17,9 @@ namespace Enes_TasciGameDev
     {
         private Game1 game;
         private Player player;
-        private Texture2D playerTexture;
         private Texture2D background;
         private Texture2D coinTexture;
         private Texture2D finishTexture;
-        private Texture2D skeletonTexture;
-        private Texture2D thiefTexture;
         private Texture2D healthBoostTexture;
         private Texture2D speedBoostTexture;
         private Texture2D scoreBackground;
@@ -52,54 +50,58 @@ namespace Enes_TasciGameDev
 
         public void LoadContent()
         {
-            // Load dog
-            dogTexture = game.Content.Load<Texture2D>("dog");
-            dog = new Dog(new Vector2(200, 200), dogTexture, rows: 2, columns: 3);
-
-            // Load textures
-            background = game.Content.Load<Texture2D>("bgLevel2");
-            playerTexture = game.Content.Load<Texture2D>("player");
-            coinTexture = game.Content.Load<Texture2D>("coin");
-            finishTexture = game.Content.Load<Texture2D>("finish");
-            skeletonTexture = game.Content.Load<Texture2D>("skeleton");
-            thiefTexture = game.Content.Load<Texture2D>("thief");
-            healthBoostTexture = game.Content.Load<Texture2D>("healthPowerUp");
-            speedBoostTexture = game.Content.Load<Texture2D>("speedPowerUp");
-
-            // Initialize player
-            player = new Player(new Vector2(100, 100), playerTexture, 4, 4);
-
-            // Initialize UI textures and font
-            scoreFont = game.Content.Load<SpriteFont>("scoreFont");
-            scoreBackground = new Texture2D(game.GraphicsDevice, 1, 1);
-            scoreBackground.SetData(new[] { Color.LightGray });
-            overlay = new Texture2D(game.GraphicsDevice, 1, 1);
-            overlay.SetData(new[] { Color.Black });
-
-            // Initialize managers
-            coinManager = new CoinManager(player, coinTexture, game.GraphicsDevice, maxCoins: 7);
-            enemyManager = new EnemyManager(player);
-            finishManager = new FinishManager(finishTexture, coinsRequired: 7, game.GraphicsDevice);
-            powerUpManager = new PowerUpManager(player, game);
-            uiManager = new UIManager(player, scoreFont, scoreBackground, overlay);
-
             // Initialize enemies
-            enemyManager.AddEnemy((Enemy)EnemyFactory.CreateEnemy(EnemyType.Thief, thiefTexture, new Vector2(300, 150), 2f));
-            enemyManager.AddEnemy((Enemy)EnemyFactory.CreateEnemy(EnemyType.Thief, thiefTexture, new Vector2(500, 400), 2f));
-            enemyManager.AddEnemy((Enemy)EnemyFactory.CreateEnemy(EnemyType.Skeleton, skeletonTexture, new Vector2(200, 200), 1.3f,
-                new List<Vector2> { new Vector2(200, 200), new Vector2(400, 200), new Vector2(400, 400), new Vector2(200, 400) }));
-            enemyManager.AddEnemy((Enemy)EnemyFactory.CreateEnemy(EnemyType.Skeleton, skeletonTexture, new Vector2(300, 100), 1.3f,
-                new List<Vector2> { new Vector2(300, 100), new Vector2(200, 100), new Vector2(200, 300), new Vector2(300, 300) }));
-            enemyManager.AddEnemy((Enemy)EnemyFactory.CreateEnemy(EnemyType.Skeleton, skeletonTexture, new Vector2(400, 150), 1.3f,
-                new List<Vector2> { new Vector2(400, 150), new Vector2(200, 150), new Vector2(200, 350), new Vector2(400, 350) }));
-            enemyManager.AddEnemy((Enemy)EnemyFactory.CreateEnemy(EnemyType.Skeleton, skeletonTexture, new Vector2(150, 300), 1.3f,
-                new List<Vector2> { new Vector2(100, 300), new Vector2(350, 300), new Vector2(350, 200), new Vector2(150, 200) }));
-            enemyManager.AddEnemy((Enemy)EnemyFactory.CreateEnemy(EnemyType.Skeleton, skeletonTexture, new Vector2(200, 250), 1.3f,
-                new List<Vector2> { new Vector2(150, 250), new Vector2(300, 250), new Vector2(300, 200), new Vector2(500, 200) }));
+            Texture2D skeletonTexture = game.Content.Load<Texture2D>("skeleton");
+            Texture2D thiefTexture = game.Content.Load<Texture2D>("thief");
+            List<Enemy> enemies = new List<Enemy>
+            {
+                (Enemy)EnemyFactory.CreateEnemy(EnemyType.Thief, thiefTexture, new Vector2(300, 150), 2f),
+                (Enemy)EnemyFactory.CreateEnemy(EnemyType.Thief, thiefTexture, new Vector2(500, 400), 2f),
+                (Enemy)EnemyFactory.CreateEnemy(EnemyType.Skeleton, skeletonTexture, new Vector2(200, 200), 1.3f,
+                    new List<Vector2> { new Vector2(200, 200), new Vector2(400, 200), new Vector2(400, 400), new Vector2(200, 400) }),
+                (Enemy)EnemyFactory.CreateEnemy(EnemyType.Skeleton, skeletonTexture, new Vector2(300, 100), 1.3f,
+                    new List<Vector2> { new Vector2(300, 100), new Vector2(200, 100), new Vector2(200, 300), new Vector2(300, 300) }),
+                (Enemy)EnemyFactory.CreateEnemy(EnemyType.Skeleton, skeletonTexture, new Vector2(400, 150), 1.3f,
+                    new List<Vector2> { new Vector2(400, 150), new Vector2(200, 150), new Vector2(200, 350), new Vector2(400, 350) }),
+                (Enemy)EnemyFactory.CreateEnemy(EnemyType.Skeleton, skeletonTexture, new Vector2(150, 300), 1.3f,
+                    new List<Vector2> { new Vector2(100, 300), new Vector2(350, 300), new Vector2(350, 200), new Vector2(150, 200) }),
+                (Enemy)EnemyFactory.CreateEnemy(EnemyType.Skeleton, skeletonTexture, new Vector2(200, 250), 1.3f,
+                    new List<Vector2> { new Vector2(150, 250), new Vector2(300, 250), new Vector2(300, 200), new Vector2(500, 200) })
+            };
 
-            // Spawn initial coin
-            coinManager.SpawnNextCoin();
+            // Configure level
+            var config = new LevelInitializer.LevelConfig
+            {
+                BackgroundTextureName = "bgLevel2",
+                MaxCoins = 7,
+                CoinsRequiredForFinish = 7,
+                PlayerStartPosition = new Vector2(100, 100),
+                Obstacles = obstacles,
+                Enemies = enemies
+            };
+
+            // Initialize using LevelInitializer
+            LevelInitializer.Initialize(
+                game,
+                config,
+                out player,
+                out dog,
+                out background,
+                out coinTexture,
+                out finishTexture,
+                out healthBoostTexture,
+                out speedBoostTexture,
+                out coinManager,
+                out enemyManager,
+                out finishManager,
+                out powerUpManager,
+                out uiManager,
+                out dogTexture,
+                out scoreFont,
+                out scoreBackground,
+                out overlay);
         }
+    
 
         public void Update(GameTime gameTime)
         {
