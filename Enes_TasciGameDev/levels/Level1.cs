@@ -24,6 +24,7 @@ namespace Enes_TasciGameDev
         private EnemyManager enemyManager;
         private PowerUpManager powerUpManager;
         private UIManager uiManager;
+        private FinishManager finishManager;
 
         // Extra entities
         private List<Obstacle> obstaclesList;
@@ -70,11 +71,11 @@ namespace Enes_TasciGameDev
 
             // Finish line
             finishTexture = game.Content.Load<Texture2D>("finish");
-            finish = null; // Nog niet zichtbaar
+            finishManager = new FinishManager(finishTexture, 5, game.GraphicsDevice); // 5 coins nodig
 
             // Managers initialiseren
             Texture2D coinTexture = game.Content.Load<Texture2D>("coin");
-            coinManager = new CoinManager(player, coinTexture, game.GraphicsDevice);
+            coinManager = new CoinManager(player, coinTexture, game.GraphicsDevice, 5);
             coinManager.SpawnNextCoin();
 
             enemyManager = new EnemyManager(player);
@@ -107,23 +108,6 @@ namespace Enes_TasciGameDev
             uiManager = new UIManager(player, scoreFont, scoreBg, overlay);
         }
 
-        private void CheckForFinishSpawn()
-        {
-            if (player.Coins >= 5 && finish == null)
-            {
-                float scale = 0.5f;
-                int finishWidth = (int)(finishTexture.Width * scale);
-                int finishHeight = (int)(finishTexture.Height * scale);
-
-                Vector2 pos = new Vector2(
-                    game.GraphicsDevice.Viewport.Width - finishWidth - 20,
-                    (game.GraphicsDevice.Viewport.Height - finishHeight) / 2
-                );
-
-                finish = new Finish(finishTexture, pos, scale);
-            }
-        }
-
         public void Update(GameTime gameTime)
         {
             dog.Update(gameTime, game.GraphicsDevice, obstaclesList);
@@ -154,8 +138,9 @@ namespace Enes_TasciGameDev
             powerUpManager.Update();
 
             // Check finish
-            CheckForFinishSpawn();
-            if (finish != null && player.GetBounds().Intersects(finish.GetBounds()))
+            finishManager.Update(player);
+
+            if (finishManager.PlayerReached(player))
             {
                 levelPassed = true;
             }
@@ -184,7 +169,7 @@ namespace Enes_TasciGameDev
             dog.Draw(spriteBatch);
 
             // Finish
-            finish?.Draw(spriteBatch);
+            finishManager.Draw(spriteBatch);
 
             // UI
             uiManager.DrawScore(spriteBatch, game.GraphicsDevice);

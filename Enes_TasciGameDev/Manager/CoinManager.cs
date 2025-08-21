@@ -18,20 +18,28 @@ namespace Enes_TasciGameDev.Manager
         private Texture2D coinTexture;
         private GraphicsDevice graphics;
 
-        public CoinManager(Player player, Texture2D coinTexture, GraphicsDevice graphics)
+        private int maxCoins;   // ✅ nieuw
+        private bool stopSpawning = false; // ✅ nieuw
+
+        public CoinManager(Player player, Texture2D coinTexture, GraphicsDevice graphics, int maxCoins)
         {
             this.player = player;
             this.coinTexture = coinTexture;
             this.graphics = graphics;
+            this.maxCoins = maxCoins;
             coins = new List<Coin>();
         }
 
         public void SpawnNextCoin()
         {
+            if (stopSpawning) return; // ✅ geen nieuwe coins meer
+
             int width = coinTexture.Width;
             int height = coinTexture.Height;
-            Vector2 pos = new Vector2(random.Next(0, graphics.Viewport.Width - width),
-                                      random.Next(0, graphics.Viewport.Height - height));
+            Vector2 pos = new Vector2(
+                random.Next(0, graphics.Viewport.Width - width),
+                random.Next(0, graphics.Viewport.Height - height));
+
             currentCoin = new Coin(coinTexture, pos);
         }
 
@@ -40,11 +48,20 @@ namespace Enes_TasciGameDev.Manager
             if (currentCoin != null && currentCoin.GetBounds().Intersects(player.GetBounds()))
             {
                 player.AddCoin();
-                SpawnNextCoin();
+
+                if (player.Coins >= maxCoins)
+                {
+                    stopSpawning = true;
+                    currentCoin = null; // laatste coin verwijderen
+                }
+                else
+                {
+                    SpawnNextCoin();
+                }
             }
         }
 
         public void Draw(SpriteBatch spriteBatch) => currentCoin?.Draw(spriteBatch);
     }
-
 }
+
