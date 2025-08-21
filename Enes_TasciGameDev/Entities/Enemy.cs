@@ -1,4 +1,4 @@
-﻿using Enes_TasciGameDev.Obs;
+﻿using Enes_TasciGameDev.Prop;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;

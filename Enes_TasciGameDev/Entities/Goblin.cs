@@ -2,8 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
-using Enes_TasciGameDev.Obs;
-using Enes_TasciGameDev.Entities;
+using Enes_TasciGameDev.Prop;
 
 namespace Enes_TasciGameDev.Entities
 {
@@ -29,7 +28,7 @@ namespace Enes_TasciGameDev.Entities
             Position = position; // Use the Position property from Enemy
             this.speed = speed;
             frameWidth = texture.Width / columns;
-            frameHeight = (texture.Height / rows) + 1;
+            frameHeight = texture.Height / rows + 1;
         }
 
         public override Vector2 Position { get; set; } // Use the virtual property from Enemy

@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Enes_TasciGameDev.Obs
+namespace Enes_TasciGameDev.Prop
 {
     public class Obstacle
     {

@@ -1,4 +1,6 @@
-﻿using Enes_TasciGameDev.Obs;
+﻿using Enes_TasciGameDev.Interfaces;
+using Enes_TasciGameDev.Manager;
+using Enes_TasciGameDev.Prop;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -23,6 +25,8 @@ public class Player
     private int deathRow = 4;
     private int deathFramesCount = 4;
 
+    private List<IPlayerObserver> observers = new List<IPlayerObserver>();
+
     public Player(Vector2 position, Texture2D texture, int rows, int columns)
     {
         this.position = position;
@@ -35,16 +39,8 @@ public class Player
         // Initialiseer de MovementComponent
         movementComponent = new MovementComponent(frameWidth, frameHeight);
     }
-
-    public void TakeDamage()
-    {
-        if (Health > 0)
-        {
-            Health--;
-            if (Health <= 0)
-                Die();
-        }
-    }
+    public void RegisterObserver(IPlayerObserver observer) => observers.Add(observer);
+    public void UnregisterObserver(IPlayerObserver observer) => observers.Remove(observer);
 
     public void ApplySpeedBoost(float multiplier, float duration)
     {
@@ -55,6 +51,19 @@ public class Player
     public void AddCoin()
     {
         Coins++;
+        GameManager.Instance.AddCoins(1); // Update singleton
+        foreach (var obs in observers) obs.OnCoinCollected(Coins);
+    }
+
+    public void TakeDamage()
+    {
+        if (Health > 0)
+        {
+            Health--;
+            foreach (var obs in observers) obs.OnHealthChanged(Health);
+            if (Health <= 0)
+                Die();
+        }
     }
 
     public void RemoveCoin()

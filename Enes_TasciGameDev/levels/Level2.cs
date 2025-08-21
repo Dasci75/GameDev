@@ -2,7 +2,6 @@
 using Enes_TasciGameDev.Entities;
 using Enes_TasciGameDev.Factories;
 using Enes_TasciGameDev.Items;
-using Enes_TasciGameDev.Obs;
 using Enes_TasciGameDev.Prop;
 using Microsoft.VisualBasic.Logging;
 using Microsoft.Xna.Framework;

@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
-using Enes_TasciGameDev.Obs; // Zorg ervoor dat dit de juiste namespace is voor je Obstacle klasse.
+using Enes_TasciGameDev.Prop; // Zorg ervoor dat dit de juiste namespace is voor je Obstacle klasse.
 
 public class MovementComponent
 {

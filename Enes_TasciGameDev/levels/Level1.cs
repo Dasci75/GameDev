@@ -2,7 +2,6 @@
 using Enes_TasciGameDev.Entities;
 using Enes_TasciGameDev.Factories;
 using Enes_TasciGameDev.Items;
-using Enes_TasciGameDev.Obs;
 using Enes_TasciGameDev.Prop;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -29,7 +28,7 @@ namespace Enes_TasciGameDev
         private Finish finish;
         private bool levelPassed = false;
         private Texture2D overlay;
-        private List<Enemy> enemies; // Changed from List<Goblin> to List<Enemy>
+        private List<Entities.Enemy> enemies; // Changed from List<Goblin> to List<Enemy>
         private Texture2D goblinTexture;
         private bool gameOver = false;
         private double damageCooldown = 1.0; // 1 second between hits
@@ -45,7 +44,7 @@ namespace Enes_TasciGameDev
         {
             this.game = game;
             powerUps = new List<PowerUp>();
-            enemies = new List<Enemy>(); // Initialize enemies list
+            enemies = new List<Entities.Enemy>(); // Initialize enemies list
         }
 
         public void LoadContent()

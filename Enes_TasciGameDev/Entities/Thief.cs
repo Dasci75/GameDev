@@ -1,4 +1,4 @@
-﻿using Enes_TasciGameDev.Obs;
+﻿using Enes_TasciGameDev.Prop;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -30,11 +30,11 @@ namespace Enes_TasciGameDev.Entities
         public Thief(Texture2D texture, Vector2 position, float speed)
         {
             this.texture = texture;
-            this.Position = position;
+            Position = position;
             this.speed = speed;
 
             frameWidth = texture.Width / columns;
-            frameHeight = (texture.Height / rows) + 1;
+            frameHeight = texture.Height / rows + 1;
 
             ChooseRandomDirection();
             changeDirInterval = rnd.NextDouble() * 2 + 1; // 1–3 seconds

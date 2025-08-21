@@ -1,4 +1,4 @@
-﻿using Enes_TasciGameDev.Obs;
+﻿using Enes_TasciGameDev.Prop;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -40,7 +40,7 @@ namespace Enes_TasciGameDev.Entities
             this.speed = speed;
             this.patrolPoints = patrolPoints ?? new List<Vector2>(); // Ensure patrolPoints is never null
             frameWidth = texture.Width / columns;
-            frameHeight = (texture.Height / rows) + 1;
+            frameHeight = texture.Height / rows + 1;
         }
 
         public override Vector2 Position { get; set; } // Use the virtual property from Enemy
