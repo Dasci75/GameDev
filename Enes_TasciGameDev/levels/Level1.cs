@@ -129,7 +129,9 @@ namespace Enes_TasciGameDev.Levels
 
             // Managers updaten
             coinManager.Update();
-            enemyManager.Update(gameTime, obstaclesList, damageCooldown, ref damageTimer, ref gameOver);
+            int screenWidth = game.GraphicsDevice.Viewport.Width;
+            int screenHeight = game.GraphicsDevice.Viewport.Height;
+            enemyManager.Update(gameTime, obstaclesList, damageCooldown, ref damageTimer, ref gameOver, screenWidth, screenHeight);
             powerUpManager.Update();
 
             // Check finish

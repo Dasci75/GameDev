@@ -117,7 +117,9 @@ namespace Enes_TasciGameDev
 
             player.Update(gameTime, game.GraphicsDevice, null);
             coinManager.Update();
-            enemyManager.Update(gameTime, obstacles, damageCooldown, ref damageTimer, ref gameOver);
+            int screenWidth = game.GraphicsDevice.Viewport.Width;
+            int screenHeight = game.GraphicsDevice.Viewport.Height;
+            enemyManager.Update(gameTime, obstacles, damageCooldown, ref damageTimer, ref gameOver, screenWidth, screenHeight);
             finishManager.Update(player);
             powerUpManager.CheckCoinTriggers(healthBoostTexture, speedBoostTexture);
             powerUpManager.Update();

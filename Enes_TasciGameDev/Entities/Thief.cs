@@ -34,7 +34,7 @@ namespace Enes_TasciGameDev.Entities
             this.speed = speed;
 
             frameWidth = texture.Width / columns;
-            frameHeight = texture.Height / rows + 1;
+            frameHeight = texture.Height / rows;
 
             ChooseRandomDirection();
             changeDirInterval = rnd.NextDouble() * 2 + 1; // 1–3 seconds
@@ -55,34 +55,40 @@ namespace Enes_TasciGameDev.Entities
 
         public override void Update(GameTime gameTime, Vector2 playerPosition, List<Enemy> enemies, List<Obstacle> obstacles, int screenWidth, int screenHeight)
         {
-            // Random direction change
+            // Random direction change timer
             changeDirTimer += gameTime.ElapsedGameTime.TotalSeconds;
             if (changeDirTimer > changeDirInterval)
             {
                 ChooseRandomDirection();
                 changeDirTimer = 0;
-                changeDirInterval = rnd.NextDouble() * 2 + 1; // new interval
+                changeDirInterval = rnd.NextDouble() * 2 + 1;
             }
 
-            // Movement
+            // Movement (delta time → framerate onafhankelijk)
             Vector2 newPosition = Position + direction * speed;
 
-            // Clamp position to stay within screen boundaries
-            newPosition.X = MathHelper.Clamp(newPosition.X, 0, screenWidth - frameWidth);
-            newPosition.Y = MathHelper.Clamp(newPosition.Y, 0, screenHeight - frameHeight);
+            // Clamp position
+            if (newPosition.X <= 0 || newPosition.X >= screenWidth - frameWidth)
+            {
+                direction.X *= -1;
+                newPosition.X = MathHelper.Clamp(newPosition.X, 0, screenWidth - frameWidth);
+            }
+
+            if (newPosition.Y <= 0 || newPosition.Y >= screenHeight - frameHeight)
+            {
+                direction.Y *= -1;
+                newPosition.Y = MathHelper.Clamp(newPosition.Y, 0, screenHeight - frameHeight);
+            }
+
             Position = newPosition;
 
             // Animation row
             if (Math.Abs(direction.X) > Math.Abs(direction.Y))
-            {
-                row = direction.X > 0 ? 1 : 3; // right : left
-            }
+                row = direction.X > 0 ? 1 : 3;
             else
-            {
-                row = direction.Y > 0 ? 2 : 0; // down : up
-            }
+                row = direction.Y > 0 ? 2 : 0;
 
-            // Update animation if moving
+            // Update animation
             if (direction != Vector2.Zero)
             {
                 timer += gameTime.ElapsedGameTime.TotalMilliseconds;
@@ -105,11 +111,15 @@ namespace Enes_TasciGameDev.Entities
             }
         }
 
+
         public override void Draw(SpriteBatch spriteBatch)
         {
             Rectangle sourceRect = new Rectangle(currentFrame * frameWidth, row * frameHeight, frameWidth, frameHeight);
-            spriteBatch.Draw(texture, Position, sourceRect, Color.White);
+            Rectangle destRect = new Rectangle((int)Position.X, (int)Position.Y, frameWidth, frameHeight);
+
+            spriteBatch.Draw(texture, destRect, sourceRect, Color.White);
         }
+
 
         public override void Stun()
         {

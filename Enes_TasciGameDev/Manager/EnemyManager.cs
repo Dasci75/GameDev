@@ -19,12 +19,12 @@ namespace Enes_TasciGameDev.Manager
 
         public void AddEnemy(Enemy enemy) => enemies.Add(enemy);
 
-        public void Update(GameTime gameTime, List<Obstacle> obstacles, double damageCooldown, ref double damageTimer, ref bool gameOver)
+        public void Update(GameTime gameTime, List<Obstacle> obstacles, double damageCooldown, ref double damageTimer, ref bool gameOver, int screenWidth, int screenHeight)
         {
             Rectangle playerBounds = player.GetBounds();
             foreach (var enemy in enemies)
             {
-                enemy.Update(gameTime, player.Position, enemies, obstacles, 800, 600); // example
+                enemy.Update(gameTime, player.Position, enemies, obstacles, screenWidth, screenHeight);
                 if (enemy.GetBounds().Intersects(playerBounds))
                 {
                     damageTimer += gameTime.ElapsedGameTime.TotalSeconds;
@@ -38,6 +38,7 @@ namespace Enes_TasciGameDev.Manager
                 }
             }
         }
+
 
         public void Draw(SpriteBatch spriteBatch)
         {
