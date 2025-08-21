@@ -1,6 +1,6 @@
 ﻿using Enes_TasciGameDev;
 using Enes_TasciGameDev.Entities;
-using Enes_TasciGameDev.Factories;
+using Enes_TasciGameDev.Factory;
 using Enes_TasciGameDev.Items;
 using Enes_TasciGameDev.Prop;
 using Microsoft.Xna.Framework;
