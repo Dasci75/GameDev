@@ -10,7 +10,7 @@ using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 
-namespace Enes_TasciGameDev
+namespace Enes_TasciGameDev.Levels
 {
     public class Level1 : IGameState
     {
@@ -91,11 +91,11 @@ namespace Enes_TasciGameDev
                 enemyManager.AddEnemy(goblin);
             }
 
-            powerUpManager = new PowerUpManager(player);
+            powerUpManager = new PowerUpManager(player, game);
             Texture2D healthTexture = game.Content.Load<Texture2D>("healthPowerUp");
             Texture2D speedTexture = game.Content.Load<Texture2D>("speedPowerUp");
-            powerUpManager.SpawnPowerUp(PowerUpType.HealthBoost, healthTexture, new Vector2(300, 200), 0.02f);
-            powerUpManager.SpawnPowerUp(PowerUpType.SpeedBoost, speedTexture, new Vector2(200, 300), 0.1f);
+            powerUpManager.SpawnPowerUp(PowerUpType.HealthBoost, healthTexture, 0.02f);
+            powerUpManager.SpawnPowerUp(PowerUpType.SpeedBoost, speedTexture, 0.1f);
 
             // UI Manager
             SpriteFont scoreFont = game.Content.Load<SpriteFont>("scoreFont");

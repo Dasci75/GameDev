@@ -12,7 +12,7 @@ namespace Enes_TasciGameDev.Manager
 {
     public class EnemyManager
     {
-        private List<Enemy> enemies = new List<Enemy>();
+        public List<Enemy> enemies = new List<Enemy>();
         private Player player;
 
         public EnemyManager(Player player) => this.player = player;
