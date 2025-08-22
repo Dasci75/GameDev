@@ -1,4 +1,5 @@
-﻿using Enes_TasciGameDev.Prop;
+﻿using Enes_TasciGameDev.Entities;
+using Enes_TasciGameDev.Prop;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -51,5 +52,10 @@ namespace Enes_TasciGameDev.Manager
         {
             return finish != null && player.GetBounds().Intersects(finish.GetBounds());
         }
+        public bool DogReached(Dog dog)
+        {
+            return finish != null && dog.GetBounds().Intersects(finish.GetBounds());
+        }
+
     }
 }

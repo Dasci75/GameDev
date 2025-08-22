@@ -137,10 +137,12 @@ namespace Enes_TasciGameDev.Levels
             // Check finish
             finishManager.Update(player);
 
-            if (finishManager.PlayerReached(player))
+            // Speler én hond moeten bij de finish zijn
+            if (finishManager.PlayerReached(player) && finishManager.DogReached(dog))
             {
                 levelPassed = true;
             }
+
         }
 
         public void Draw(SpriteBatch spriteBatch)

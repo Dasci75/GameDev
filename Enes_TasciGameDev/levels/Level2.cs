@@ -134,9 +134,10 @@ namespace Enes_TasciGameDev
                 }
             }
 
-            // Check for level completion
-            if (finishManager.PlayerReached(player))
+            // Check for level completion (speler én hond moeten finish bereiken)
+            if (finishManager.PlayerReached(player) && finishManager.DogReached(dog))
                 levelPassed = true;
+
 
             // Update game over state
             if (player.isDead)
